@@ -32,10 +32,10 @@ const Pokedex =()=>{
                     <Grid item   xs={6} lg={6} style={{flexDirection:'row'}}>
                    {selected ? <Image height='150' width='150' alt="sprite" src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${selected}.png`}></Image> : ""}
                    <Grid item xs={12} lg={12} align={'center'}>
-                    <div >
+                    <div style={{textAlign:'center',justifyContent:'center',alignItems:'center'}} >
                   {type ? type.map(type=>{
                     return POKEMON_TYPE(type.pokemon_v2_type.name)
-                  }):"hola"}</div>
+                  }):"Choose a pokemon to preview"}</div>
                   
                   {/* {POKEMON_TYPE(type)} */}
                    </Grid>

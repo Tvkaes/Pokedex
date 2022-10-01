@@ -20,8 +20,8 @@ function NameList({name,setSelected,getType}) {
           <List >
               {dataPoke ? dataPoke.pokemon_v2_pokemon.map((value,index)=>(
                   <ListItem button key={value.name} onClick={(e)=>{setSelected(value.id); getType(value.pokemon_v2_pokemontypes)}}>
-                      <ListItemIcon><CatchingPokemonIcon style={{color:'white'}}></CatchingPokemonIcon> </ListItemIcon>
-                          <ListItemText primary={`${value.id} - ${value.name}`}    style={{color:'white',textTransform:'capitalize'}}></ListItemText>
+                      <ListItemIcon><CatchingPokemonIcon style={{color:'black'}}></CatchingPokemonIcon> </ListItemIcon>
+                          <ListItemText primary={`${value.id} - ${value.name}`}    style={{color:'black',textTransform:'capitalize'}}></ListItemText>
                   </ListItem>
               )):""}
           </List>
