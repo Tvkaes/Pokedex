@@ -6,20 +6,22 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import { GET_POKEMONS } from '../querys/pokemon';
 
-function NameList({name,setSelected,getType}) {
+function NameList({name,setSelected,getType,setInfo}) {
   
   const {data:dataPoke}= useQuery(GET_POKEMONS);
 
-
-
- 
-    
+  const HandleInfo = (value,id,type)=>{
+    setInfo(value);
+    setSelected(id);
+    getType(type)
+  }
+  
   const renderList = (props)=>{
 
       return(
           <List >
               {dataPoke ? dataPoke.pokemon_v2_pokemon.map((value,index)=>(
-                  <ListItem button key={value.name} onClick={(e)=>{setSelected(value.id); getType(value.pokemon_v2_pokemontypes)}}>
+                  <ListItem button key={value.name} onClick={(e)=>{HandleInfo(value,value.id,value.pokemon_v2_pokemontypes)}}>
                       <ListItemIcon><CatchingPokemonIcon style={{color:'black'}}></CatchingPokemonIcon> </ListItemIcon>
                           <ListItemText primary={`${value.id} - ${value.name}`}    style={{color:'black',textTransform:'capitalize'}}></ListItemText>
                   </ListItem>

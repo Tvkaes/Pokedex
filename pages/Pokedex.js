@@ -8,6 +8,7 @@ import ListItemText from '@mui/material/ListItemText';
 import NameList from "../components/NameList";
 import Image from "next/image";
 import { POKEMON_TYPE } from "../helpers/typeIcon"; 
+import PokemonCard from "../components/PokemonCard";
 
 
 
@@ -18,6 +19,7 @@ const Pokedex =()=>{
 
     const [selected,setSelected]=useState()
     const [type,getType] = useState()
+    const [info,setInfo] =useState()
 
   
 
@@ -29,26 +31,24 @@ const Pokedex =()=>{
         <div >
             <Grid container>
                 <Grid item container xs={12} lg={12} style={{flexDirection:'row',margin:15,display:'flex'}}>
+                   
                     <Grid item   xs={6} lg={6} style={{flexDirection:'row'}}>
-                   {selected ? <Image height='150' width='150' alt="sprite" src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${selected}.png`}></Image> : ""}
+                      
+                       <PokemonCard id={selected}></PokemonCard>
+                       
                    <Grid item xs={12} lg={12} align={'center'}>
-                    <div style={{textAlign:'center',justifyContent:'center',alignItems:'center'}} >
+                    <div >
                   {type ? type.map(type=>{
                     return POKEMON_TYPE(type.pokemon_v2_type.name)
                   }):"Choose a pokemon to preview"}</div>
-                  
-                  {/* {POKEMON_TYPE(type)} */}
                    </Grid>
                     </Grid>
                     <Grid item xs={6} lg={6}>
-                    <NameList setSelected={setSelected} getType={getType}></NameList> 
+                    <NameList setSelected={setSelected} getType={getType} setInfo={setInfo}></NameList> 
                     </Grid>
                 </Grid>
             </Grid>
-
-
         </div>
-
     )
 }
 
