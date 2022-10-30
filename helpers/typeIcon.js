@@ -64,3 +64,67 @@ export const POKEMON_TYPE = (type)=>{
     }
     return <span>{_tag}</span>
 }
+
+export const TYPE_COLOR = (type) => {
+    var _tag;
+    switch (type) {
+        case "bug":
+            _tag = "#A6B91A"
+            
+            break;
+        case "dragon":
+            _tag = "#6F35FC "
+            
+            break;
+        case "fighting":
+            _tag = "#C22E28"
+            
+            break;
+        case "fire":
+            _tag = "#EE8130"
+            
+            break;
+        case "ghost":
+            _tag = "#735797"
+            
+            break;
+        case "grass":
+            _tag = "#7AC74C"
+            
+            break;
+        case "ground":
+            _tag = "#E2BF65"
+            break;
+        case "ice":
+            _tag = "#96D9D6"
+            break;
+        case "normal":
+            _tag = "#A8A77A"
+            break;
+        case "poison":
+            _tag = "#A33EA1"
+            break;
+        case "psychic":
+            _tag = "#F95587"
+            break;
+        case "rock":
+            _tag = "#B6A136"
+            break;
+        case "water":
+            _tag = "#6390F0"
+            break;
+        case "electric":
+            _tag = "#F7D02C"
+            break;
+        case "flying":
+            _tag = "#A98FF3"
+            break;
+        case "fairy":
+            _tag = "#D685AD"
+            break;
+    
+        default:
+            break;
+    }
+    return _tag
+}

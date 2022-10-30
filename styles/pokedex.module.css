@@ -1,0 +1,30 @@
+.containerUp{
+    color:white;
+    height: 16vw;
+    width: 100%;
+    background-image: url("../public/Pokeball.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 12px;
+    text-transform: capitalize;
+    
+}
+
+.containerDown{
+
+    background-color: white;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    
+}
+
+.neo{
+background-color: white;
+height:30.43vw;
+width:24.88vw;
+box-shadow:  20px 20px 60px #bebebe,
+             -20px -20px 60px #ffffff;
+
+}
+

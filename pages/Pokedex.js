@@ -28,19 +28,16 @@ const Pokedex =()=>{
   
     return(
 
-        <div >
+        <div>
             <Grid container>
                 <Grid item container xs={12} lg={12} style={{flexDirection:'row',margin:15,display:'flex'}}>
                    
                     <Grid item   xs={6} lg={6} style={{flexDirection:'row'}}>
                       
-                       <PokemonCard id={selected}></PokemonCard>
+                       <PokemonCard id={selected} type={type ? type : null}></PokemonCard>
                        
                    <Grid item xs={12} lg={12} align={'center'}>
-                    <div >
-                  {type ? type.map(type=>{
-                    return POKEMON_TYPE(type.pokemon_v2_type.name)
-                  }):"Choose a pokemon to preview"}</div>
+                    
                    </Grid>
                     </Grid>
                     <Grid item xs={6} lg={6}>

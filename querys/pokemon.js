@@ -16,8 +16,12 @@ query GetPokemon {
         name
       }
     }
+    weight
+    height
   }
+ 
 }
+
 
 `;
 
@@ -46,6 +50,8 @@ query($id:Int) {
         name
       }
     }
+    weight
+    height
   }
   pokemon_v2_pokemonspeciesflavortext(where: {id: {_eq: $id}}) {
     flavor_text
