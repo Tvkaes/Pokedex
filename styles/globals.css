@@ -62,3 +62,10 @@ a {
   font-family: DMSans-Bold;
   src: url('../public/DM_Sans/DMSans-Bold.ttf');
 }
+.neo{    
+  background-color: white;
+  border-radius: 12px;
+  box-shadow:  20px 20px 60px #bebebe,
+               -20px -20px 60px #ffffff;
+  }
+

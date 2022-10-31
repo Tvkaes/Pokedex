@@ -11,7 +11,7 @@
 }
 
 .containerDown{
-
+    border-radius: 12px;
     background-color: white;
     height: 100%;
     width: 100%;
@@ -19,12 +19,16 @@
     
 }
 
-.neo{
+.neo{    
 background-color: white;
-height:30.43vw;
-width:24.88vw;
+border-radius: 12px;
+height:32.43vw;
+width:28.88vw;
 box-shadow:  20px 20px 60px #bebebe,
              -20px -20px 60px #ffffff;
-
 }
+.mask{
+    background: rgb(255,206,149);
+background: linear-gradient(49deg, rgba(255,206,149,1) 0%, rgba(65,83,255,1) 47%, rgba(235,75,75,1) 80%);
+  }
 
