@@ -53,7 +53,19 @@ query($id:Int) {
     weight
     height
   }
-  pokemon_v2_pokemonspeciesflavortext(where: {id: {_eq: $id}}) {
+  pokemon_v2_pokemonspeciesflavortext(where: {language_id: {_eq: 9}, pokemon_species_id: {_eq: $id}, pokemon_v2_version: {name: {_eq: "red"}}}) {
+    flavor_text
+    language_id
+    id
+    
+  }
+}
+`;
+
+export const GET_DESCRIPTION = gql `
+query($id:Int){
+  pokemon_v2_pokemonspeciesflavortext_by_pk(id: $id) {
+    language_id
     flavor_text
   }
 }
