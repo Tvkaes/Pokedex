@@ -1,10 +1,10 @@
 import React,{useState,useEffect}  from "react";
 import { Typography,Grid,List, ListItemIcon, TextField, InputBase } from "@mui/material";
 import NameList from "../components/NameList";
-import Image from "next/image";
-import { POKEMON_TYPE } from "../helpers/typeIcon"; 
+
+ 
 import PokemonCard from "../components/PokemonCard";
-import { Wave } from "../public/wave";
+
 import {FaSearch} from "react-icons/fa";
 import { TYPE_COLOR } from "../helpers/typeIcon";
 
