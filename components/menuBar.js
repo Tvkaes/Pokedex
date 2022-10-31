@@ -9,7 +9,7 @@ import Drawer from '@mui/material/Drawer';
 import MenuIcon from '@mui/icons-material/Menu';
 import { MobileView } from "react-device-detect";
 import { isMobile } from "react-device-detect";
-
+import {SiPokemon} from "react-icons/si"
 function ElevationScroll(props) {
   const { children, window } = props;
   // Note that you normally won't need to set the window ref as useScrollTrigger
@@ -70,10 +70,10 @@ const Navbar = (props)=>{
   const container = window !== undefined ? () => window().document.body : undefined;
 
     return(
-   <div>
+   <div >
      <Box sx={{ display: 'flex' }}>
      <ElevationScroll {...props}>
-      <AppBar component="nav" style={{backgroundColor:'#ffff'}}>
+      <AppBar component="nav" style={{backgroundColor:'rgba(255,255,255,0.3)',backdropFilter:'blur(10px)'}}>
         <Toolbar>
           <IconButton
             color="inherit"
@@ -84,14 +84,19 @@ const Navbar = (props)=>{
           >
             <MenuIcon style={{color:'white'}} />
           </IconButton>
-          {isMobile ? <Typography style={{color:'black',fontFamily:'DMSans-Regular'}} variant={'body2'} >Pokedex</Typography>: null}
+          {isMobile ? <Typography style={{color:'black',fontFamily:'DMSans-Regular'}} variant={'body2'} >Dex</Typography>: null}
+          <div>
+          <SiPokemon size={'5vw'} color={'black'}/>
+          </div>
           <Typography
             variant="h6"
             component="div"
             sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } ,fontFamily:'DMSans-Regular',color:'black'}}
           >
-            Pokedex
+           Dex
           </Typography>
+          <SiPokemon size={'5vw'}/>
+          
           <Box sx={{ display: { xs: 'none', sm: 'block' }}}>
             {navItems.map((item) => (
               <Button key={item} sx={{ color: 'black',fontFamily:'DMSans-Regular' }}>
@@ -129,9 +134,9 @@ const Navbar = (props)=>{
          
         </Drawer>
       </Box>
-      <div style={{padding:3}}>
+      <Box>
         {props.children}
-      </div>
+      </Box>
     </Box>
   </div>
     )
