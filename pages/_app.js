@@ -26,7 +26,9 @@ export default function MyApp(props) {
         <title>Pokedex</title>
         <meta name="viewport" content='minimum-scale=1, initial-scale=1' ></meta>
       </Head>
+      <div style={{height:'100vw', width:'100vw'}}>
       {wrappedComponent}
+      </div>
       </ApolloProvider>
     </React.Fragment>
   )
