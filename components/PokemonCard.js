@@ -1,7 +1,7 @@
 import React,{useState} from 'react'
 import { Typography,Grid,Paper,Divider } from '@mui/material'
 import Image from "next/image";
-import { GET_POKEMON_BY_ID } from '../querys/pokemon';
+import { GET_POKEMON_BY_ID,GET_DESCRIPTION } from '../querys/pokemon';
 import { useQuery } from '@apollo/client';
 import styles from '../styles/pokedex.module.css'
 import { POKEMON_TYPE } from "../helpers/typeIcon"; 
@@ -11,15 +11,20 @@ import ProgressBar from 'react-percent-bar';
 import { TYPE_COLOR } from '../helpers/typeIcon';
 
 
-function PokemonCard({id,type}) {
+function PokemonCard({id,type,getColors}) {
 
    const {data,loading,error}=useQuery(GET_POKEMON_BY_ID,{
     variables:{
       id:id
     }
    })
-   const [color,setColor]= useState()
- 
+
+   const {data:flavor_text,loading:loading_text,error:error_text} = useQuery(GET_DESCRIPTION,{
+    variables:{
+      id:id
+    }
+   })
+
 
 
    function Percent(data) {
@@ -31,18 +36,18 @@ function PokemonCard({id,type}) {
      
        totalPercent = (min*maxPercent)/max
     }
-    console.log(totalPercent)
+    
     return totalPercent
  
    }
 
    function renderStats() {
-
+    let i
     if(data){
      return data.pokemon_v2_pokemon.map(array=>{
        return array.pokemon_v2_pokemonstats.map(stats=>{
           return (
-            <Grid item xs={12} lg={12} style={{display:'flex',justifyContent:'space-between'}} key={stats.pokemon_v2_pokemonstat ? stats.pokemon_v2_pokemonstat.name : '' }>
+            <Grid item xs={12} lg={12} style={{display:'flex',justifyContent:'space-between'}} key={stats.pokemon_v2_stat ? stats.pokemon_v2_stat.name : ''}>
                 <Typography style={{fontFamily:'DMSans-Regular',marginLeft:'.9vw'}}>{stats.pokemon_v2_stat ? stats.pokemon_v2_stat.name : '' }</Typography>
                 <ProgressBar percent={Percent(stats.base_stat)} width="50%" fillColor= {getColor()}>40</ProgressBar>
               </Grid>
@@ -57,10 +62,13 @@ function PokemonCard({id,type}) {
     
     if(data){
      return data.pokemon_v2_pokemon.map(base=>{
+      getColors(base.pokemon_v2_pokemontypes[0].pokemon_v2_type.name)
       return TYPE_COLOR(base.pokemon_v2_pokemontypes[0].pokemon_v2_type.name)
+     
       })
     }
    }
+
 
 
 
@@ -71,9 +79,9 @@ function PokemonCard({id,type}) {
    <div className={styles.neo}>
         {/* Upp */}
           <div className={styles.containerUp} style={{backgroundColor:getColor()}}>
-            <div style={{padding:15,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-            <Typography style={{fontFamily:'DMSans-Regular'}} >{data ? data.pokemon_v2_pokemon[0].name : '' }</Typography>
-            <Typography style={{fontFamily:'DMSans-Regular',marginRight:'1vw'}} >{`#${id ? id : ''}`}</Typography>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <Typography style={{fontFamily:'DMSans-Bold',marginLeft:'1vw',marginTop:'1vw'}} variant={'h6'} >{data ? data.pokemon_v2_pokemon[0].name : '' }</Typography>
+            <Typography style={{fontFamily:'DMSans-Bold',marginRight:'1vw',marginTop:'1vw'}} >{`#${id ? id : ''}`}</Typography>
             </div>
             <div align={'center'} > 
             {id ? 
@@ -92,15 +100,16 @@ function PokemonCard({id,type}) {
         {/* Down */}
           <div className={styles.containerDown} >
          <Grid container>
-          <Grid item xs={12} lg={12} style={{padding:'1.5vw'}} >
+          <Grid item xs={12} lg={12} style={{padding:'1vw'}} >
           {type ? type.map(type=>{
              return POKEMON_TYPE(type.pokemon_v2_type.name)
             }):"Choose a pokemon to preview"}
           </Grid>
-          <Grid item container lg={12} xs={12} style={{padding:'.5vw'}}>
+          <Grid item container lg={12} xs={12} style={{padding:'.1vw'}}>
 
            <Grid item xs={12} lg={12} >
-           <Typography variant={'h6'} style={{fontFamily:'DMSans-Medium'}} >About</Typography>
+           <Typography variant={'h6'} style={{fontFamily:'DMSans-Medium'}}>About</Typography>
+           
            </Grid>
 
            <Grid item container xs={12} lg={12} style={{width:'100%'}}>
@@ -122,6 +131,11 @@ function PokemonCard({id,type}) {
             <Grid item xs={6} lg={6}>
               <Typography variant={'caption'} style={{fontFamily:'DMSans-Bold'}}>Height</Typography>
             </Grid>
+            <Typography variant='caption' style={{fontFamily:'DMSans-Regular',marginTop:'1vw'}}>
+                {data ? 
+                  data.pokemon_v2_pokemonspeciesflavortext ?
+                  data.pokemon_v2_pokemonspeciesflavortext[0].flavor_text.replace(''," ") : '' : '' }
+              </Typography>
            </Grid>
           </Grid>
           <Grid item container xs={12} lg={12}>
@@ -136,29 +150,7 @@ function PokemonCard({id,type}) {
          </Grid>
 
           </div> 
-            {/* <Grid item container xs={12} lg={12}>
-            <Paper style={{height:30,width:100,margin:15}}>
-               {data ? <Typography variant={'body1'}  style={{fontFamily:'PokeFont',marginLeft:5}}>{data.pokemon_v2_pokemon[0].name}</Typography> :''}
-            </Paper>
-
-            </Grid>
-            <div>
-           {id ? 
-           <div style={{backgroundColor:'rgba(226,191,101,.34)',borderRadius:100}}>
-           <Image 
-           height='120' 
-           width='120' 
-           alt="sprite" 
-           src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`}/>
-           </div>
-          :
-          <div style={{display:'flex',position:'relative',top:100,left:100}}>
-            <Image height={'50'} width={'50'} alt={"pokeball"} src={"/poke-ball.png"} />
-          </div>
-          }
-            </div> */}
-        
-        {/* </Grid> */}
+           
     </div>
 
   )
