@@ -53,6 +53,12 @@ query($id:Int) {
     weight
     height
   }
+ 
+}
+`;
+
+export const GET_DESCRIPTION = gql `
+query($id:Int!){
   pokemon_v2_pokemonspeciesflavortext(where: {language_id: {_eq: 9}, pokemon_species_id: {_eq: $id}, pokemon_v2_version: {name: {_eq: "red"}}}) {
     flavor_text
     language_id
@@ -62,12 +68,25 @@ query($id:Int) {
 }
 `;
 
-export const GET_DESCRIPTION = gql `
-query($id:Int){
-  pokemon_v2_pokemonspeciesflavortext_by_pk(id: $id) {
-    language_id
-    flavor_text
-  }
-}
-`;
+export const GET_POKEMON_BY_NAME = gql`
 
+query GetPokemon($name:String) {
+  pokemon_v2_pokemon(where: {name: {_like: $name}}, limit: 1) {
+    id
+    name
+    pokemon_v2_pokemonstats {
+      base_stat
+      pokemon_v2_stat {
+        name
+      }
+    }
+    pokemon_v2_pokemontypes {
+      pokemon_v2_type {
+        name
+      }
+    }
+    height
+    weight
+  }
+  
+} `;

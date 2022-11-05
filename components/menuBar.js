@@ -95,7 +95,7 @@ const Navbar = (props)=>{
           >
            Dex
           </Typography>
-          <SiPokemon size={'5vw'}/>
+          
           
           <Box sx={{ display: { xs: 'none', sm: 'block' }}}>
             {navItems.map((item) => (
