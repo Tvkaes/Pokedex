@@ -122,6 +122,9 @@ export const TYPE_COLOR = (type) => {
         case "fairy":
             _tag = "#D685AD"
             break;
+        case "default":
+            _tag = "#ABABAB"
+            break;
     
         default:
             break;
