@@ -20,7 +20,7 @@ function PokemonCard({id,type,getColors,info}) {
       id:id
     }
   })
-  console.log(data?data:"")
+
 
 
    function Percent(info) {
@@ -38,7 +38,6 @@ function PokemonCard({id,type,getColors,info}) {
    }
 
    function renderStats() {
-    let i
     if(info){
      return info.pokemon_v2_pokemon.map(array=>{
        return array.pokemon_v2_pokemonstats.map(stats=>{
@@ -79,7 +78,7 @@ function PokemonCard({id,type,getColors,info}) {
         {/* Upp */}
           <div className={styles.containerUp} style={{backgroundColor:getColor()}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-            <Typography style={{fontFamily:'DMSans-Bold',marginLeft:'1vw',marginTop:'1vw'}} variant={'h6'} >{info ? info.pokemon_v2_pokemon[0].name : '' }</Typography>
+            <Typography style={{fontFamily:'DMSans-Bold',marginLeft:'1vw',marginTop:'1vw'}} variant={'h6'} >{info ? info.pokemon_v2_pokemon ? info.pokemon_v2_pokemon[0].name : '' : '' }</Typography>
             <Typography style={{fontFamily:'DMSans-Bold',marginRight:'1vw',marginTop:'1vw'}} >{`#${id ? id : ''}`}</Typography>
             </div>
             <div align={'center'} > 

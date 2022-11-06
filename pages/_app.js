@@ -2,7 +2,6 @@ import { ApolloProvider } from '@apollo/client'
 import '../styles/globals.css'
 import client from '../apollo-client'
 import React from 'react';
-import { createTheme } from '@mui/material';
 import Head from 'next/head'
 
 
@@ -26,7 +25,8 @@ export default function MyApp(props) {
         <title>Pokedex</title>
         <meta name="viewport" content='minimum-scale=1, initial-scale=1' ></meta>
       </Head>
-      <div style={{height:'100vw', width:'100vw'}}>
+      <div  style={{  height:' 100vw',width: '100vw'}}>
+        <div/>
       {wrappedComponent}
       </div>
       </ApolloProvider>

@@ -73,7 +73,7 @@ const Navbar = (props)=>{
    <div >
      <Box sx={{ display: 'flex' }}>
      <ElevationScroll {...props}>
-      <AppBar component="nav" style={{backgroundColor:'rgba(255,255,255,0.3)',backdropFilter:'blur(10px)'}}>
+      <AppBar component="nav" style={{backgroundColor:'rgba(255,255,255,0.0)',backdropFilter:'blur(10px)'}}>
         <Toolbar>
           <IconButton
             color="inherit"
@@ -86,12 +86,12 @@ const Navbar = (props)=>{
           </IconButton>
           {isMobile ? <Typography style={{color:'black',fontFamily:'DMSans-Regular'}} variant={'body2'} >Dex</Typography>: null}
           <div>
-          <SiPokemon size={'5vw'} color={'black'}/>
+          <SiPokemon size={'5vw'} color={'white'}/>
           </div>
           <Typography
             variant="h6"
             component="div"
-            sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } ,fontFamily:'DMSans-Regular',color:'black'}}
+            sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } ,fontFamily:'DMSans-Regular',color:'white'}}
           >
            Dex
           </Typography>

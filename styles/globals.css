@@ -65,7 +65,22 @@ a {
 .neo{    
   background-color: white;
   border-radius: 12px;
-  box-shadow:  20px 20px 60px #bebebe,
-               -20px -20px 60px #ffffff;
+ 
+  }
+
+  .input-with-hint {
+    border:0px solid #888;
+    background-color: transparent;
+    padding: 0.5em 1em;
+    border-radius: 0.2em;
+    font-size: 1.22em;
+    color: #333;
+    width: 34vw;
+  }
+ 
+  .input-with-hint:focus {
+    border-color: transparent;
+    outline: 0;
+   
   }
 
