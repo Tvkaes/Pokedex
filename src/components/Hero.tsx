@@ -19,7 +19,7 @@ const HeroPokedex = ()=>{
     const [pkmnDefault,setRandomPokemon] = useState<any>()
     const [currentIndex, setCurrentIndex] = useState<number | null>(null);
     const [randomNumber, setRandomNumber] = useState<number>(0);
-    const [pkmnCries,setPkmnCries] = useState<string | undefined>(undefined)
+   
     
     
 
@@ -68,7 +68,7 @@ const HeroPokedex = ()=>{
 
     setRandomPokemon(pokemons[newIndex]);
     setCurrentIndex(newIndex);
-    setPkmnCries(`https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${newIndex}.ogg`)
+   
    
   };
 
