@@ -1,0 +1,136 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { PokemonDisplayData } from '@/types/pokemon.types'
+import { getTypeColor } from '@/utils/typeColors'
+
+const props = defineProps<{
+  pokemon: PokemonDisplayData
+  primaryType: string
+}>()
+
+const typeColor = computed(() => getTypeColor(props.primaryType))
+
+const numberColumn = computed(() => {
+  const start = Math.max(1, props.pokemon.id - 4)
+  return Array.from({ length: 10 }, (_, index) => start + index)
+})
+
+const backgroundLabel = computed(() => props.pokemon.nativeName ?? props.pokemon.name.toUpperCase())
+
+const imperialHeight = computed(() => {
+  const meters = props.pokemon.height
+  const totalInches = meters * 39.3701
+  const feet = Math.floor(totalInches / 12)
+  const inches = Math.round(totalInches % 12)
+  return `${feet}' ${inches}"`
+})
+
+const imperialWeight = computed(() => {
+  const kg = props.pokemon.weight
+  const lbs = kg * 2.20462
+  return `${Math.round(lbs)} lbs`
+})
+
+const baseNavigation = computed(() => {
+  const start = 1
+  const end = 151
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index)
+})
+</script>
+
+<template>
+  <div
+    class="relative min-h-screen w-full text-surface-50 flex flex-col"
+    :style="{ backgroundColor: typeColor.color || '#B3272C' }"
+  >
+    <div class="absolute inset-0 overflow-hidden pointer-events-none select-none">
+      <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.08] text-[25vw] md:text-[18vw] font-black tracking-tight leading-none whitespace-nowrap">
+        {{ backgroundLabel }}
+      </span>
+    </div>
+
+    <div class="relative flex-1 grid gap-6 lg:gap-12 lg:grid-cols-[1.2fr_1fr_0.35fr] p-6 sm:p-8 lg:p-12 xl:p-16 items-center">
+      <div class="space-y-4 sm:space-y-6 text-left order-last lg:order-first">
+        <div class="space-y-1 sm:space-y-2">
+          <p class="text-xs sm:text-sm uppercase tracking-[0.4em] sm:tracking-[0.5em] text-white/80">#{{ pokemon.id.toString().padStart(3, '0') }}</p>
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-display font-semibold leading-tight">{{ pokemon.name }}</h1>
+        </div>
+
+        <div class="space-y-1 text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/90">
+          <p>Height · <span class="font-mono tracking-normal">{{ imperialHeight }}</span></p>
+          <p>Weight · <span class="font-mono tracking-normal">{{ imperialWeight }}</span></p>
+        </div>
+
+        <p class="text-sm sm:text-base max-w-md leading-relaxed text-white/90 line-clamp-4">
+          {{ pokemon.description || 'Descripción no disponible aún. Explora otra especie.' }}
+        </p>
+
+        <div class="flex flex-wrap gap-2 sm:gap-3">
+          <span
+            v-for="type in pokemon.types"
+            :key="type.type.name"
+            class="px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-white/30 uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs font-medium"
+          >
+            {{ type.type.name }}
+          </span>
+        </div>
+      </div>
+
+      <div class="relative flex flex-col items-center justify-center order-first lg:order-none">
+        <div class="absolute w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 blur-[100px] opacity-50 rounded-full" :style="{ backgroundColor: typeColor.glow }" />
+        <img
+          :src="pokemon.sprite"
+          :alt="pokemon.name"
+          loading="eager"
+          fetchpriority="high"
+          class="relative w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96 object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.4)] transition-transform duration-500 hover:scale-105"
+        />
+        <div class="mt-4 lg:mt-6 text-center text-xs sm:text-sm uppercase tracking-[0.3em] text-white/80">
+          Bio · {{ pokemon.genus || 'Pokémon' }}
+        </div>
+      </div>
+
+      <div class="hidden lg:flex flex-col items-end gap-1 xl:gap-2 text-right text-xs xl:text-sm uppercase tracking-[0.3em] xl:tracking-[0.4em]">
+        <span 
+          v-for="number in numberColumn" 
+          :key="number" 
+          class="transition-colors cursor-pointer hover:text-white"
+          :class="number === pokemon.id ? 'text-white font-bold text-base xl:text-lg' : 'text-white/50'"
+        >
+          {{ number.toString().padStart(3, '0') }}
+        </span>
+        <div class="mt-4 xl:mt-6 flex flex-col items-center gap-3 xl:gap-4">
+          <div class="h-10 w-10 xl:h-12 xl:w-12 rounded-full border border-white/30 flex items-center justify-center">
+            <svg class="w-5 h-5 xl:w-6 xl:h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path d="M12 3c-1.5 3.5-4 4.5-4 7.5a4 4 0 0 0 8 0c0-3-2.5-4-4-7.5Z" />
+              <path d="M12 21c3.5-2 5-5 5-7.5a5 5 0 1 0-10 0c0 2.5 1.5 5.5 5 7.5Z" />
+            </svg>
+          </div>
+          <div class="text-[10px] xl:text-xs text-white/70 tracking-[0.2em] xl:tracking-[0.3em] rotate-180 writing-vertical">
+            Pokédex · All Regions
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="border-t border-white/20 px-4 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs uppercase tracking-[0.3em] sm:tracking-[0.4em] overflow-x-auto scrollbar-hide">
+      <div class="flex gap-3 sm:gap-4 min-w-max">
+        <span
+          v-for="number in baseNavigation"
+          :key="number"
+          class="cursor-pointer transition-colors hover:text-white"
+          :class="number === pokemon.id ? 'text-white font-bold' : 'text-white/50'"
+        >
+          {{ number.toString().padStart(3, '0') }}
+        </span>
+      </div>
+    </nav>
+  </div>
+</template>
+
+<style scoped>
+.writing-vertical {
+  writing-mode: vertical-rl;
+  text-transform: uppercase;
+}
+</style>
