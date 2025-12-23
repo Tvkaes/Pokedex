@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import type { ComponentPublicInstance } from 'vue'
 import type { PokemonDisplayData } from '@/types/pokemon.types'
+import { MAX_POKEMON_ID } from '@/utils/constants'
 import { getTypeColor } from '@/utils/typeColors'
 
 const props = defineProps<{
@@ -13,11 +15,6 @@ const emit = defineEmits<{
 }>()
 
 const typeColor = computed(() => getTypeColor(props.primaryType))
-
-const numberColumn = computed(() => {
-  const start = Math.max(1, props.pokemon.id - 4)
-  return Array.from({ length: 10 }, (_, index) => start + index)
-})
 
 const backgroundLabel = computed(() => props.pokemon.nativeName ?? props.pokemon.name.toUpperCase())
 
@@ -37,8 +34,97 @@ const imperialWeight = computed(() => {
 
 const baseNavigation = computed(() => {
   const start = 1
-  const end = 151
+  const end = MAX_POKEMON_ID
   return Array.from({ length: end - start + 1 }, (_, index) => start + index)
+})
+
+const navContainer = ref<HTMLElement | null>(null)
+const verticalNavContainer = ref<HTMLElement | null>(null)
+const navButtonRefs = new Map<number, HTMLElement>()
+const verticalButtonRefs = new Map<number, HTMLElement>()
+const cryAudio = ref<HTMLAudioElement | null>(null)
+
+function setNavButtonRef(el: Element | ComponentPublicInstance | null, number: number) {
+  if (el instanceof HTMLElement) {
+    navButtonRefs.set(number, el)
+    return
+  }
+
+  navButtonRefs.delete(number)
+}
+
+function setVerticalButtonRef(el: Element | ComponentPublicInstance | null, number: number) {
+  if (el instanceof HTMLElement) {
+    verticalButtonRefs.set(number, el)
+    return
+  }
+
+  verticalButtonRefs.delete(number)
+}
+
+async function scrollSelectedIntoView(id: number) {
+  await nextTick()
+
+  const container = navContainer.value
+  const button = navButtonRefs.get(id) ?? null
+
+  if (!container || !button || typeof window === 'undefined') return
+
+  const paddingLeft = parseFloat(window.getComputedStyle(container).paddingLeft || '0')
+  const targetScroll = Math.max(0, button.offsetLeft - paddingLeft)
+
+  container.scrollTo({
+    left: targetScroll,
+    behavior: 'smooth',
+  })
+}
+
+async function scrollVerticalSelectedIntoView(id: number) {
+  await nextTick()
+
+  const container = verticalNavContainer.value
+  const button = verticalButtonRefs.get(id) ?? null
+
+  if (!container || !button || typeof window === 'undefined') return
+
+  const paddingTop = parseFloat(window.getComputedStyle(container).paddingTop || '0')
+  const targetScroll = Math.max(0, button.offsetTop - paddingTop)
+
+  container.scrollTo({
+    top: targetScroll,
+    behavior: 'smooth',
+  })
+}
+
+async function playCry(url?: string) {
+  if (!url || typeof Audio === 'undefined') return
+
+  cryAudio.value?.pause()
+
+  const audio = new Audio(url)
+  audio.currentTime = 0
+  cryAudio.value = audio
+
+  try {
+    await audio.play()
+  } catch (error) {
+    console.warn('No se pudo reproducir el cry del Pokémon.', error)
+  }
+}
+
+watch(
+  () => props.pokemon.id,
+  (newId) => {
+    scrollSelectedIntoView(newId)
+    scrollVerticalSelectedIntoView(newId)
+    void playCry(props.pokemon.cryUrl)
+  },
+  { immediate: true }
+)
+
+onBeforeUnmount(() => {
+  cryAudio.value?.pause()
+  cryAudio.value = null
 })
 </script>
 
@@ -94,18 +180,28 @@ const baseNavigation = computed(() => {
         </div>
       </div>
 
-      <div class="hidden lg:flex flex-col items-end gap-1 xl:gap-2 text-right text-xs xl:text-sm uppercase tracking-[0.3em] xl:tracking-[0.4em] max-h-[70vh] overflow-y-auto pr-2 scrollbar-hide">
-        <button
-          v-for="number in numberColumn"
-          :key="number"
-          type="button"
-          class="transition-colors hover:text-white focus:outline-none"
-          :class="number === pokemon.id ? 'text-white font-bold text-base xl:text-lg' : 'text-white/50'"
-          :aria-current="number === pokemon.id ? 'true' : undefined"
-          @click="emit('select', number)"
+      <div class="hidden lg:flex flex-col items-end gap-1 xl:gap-2 text-right text-xs xl:text-sm uppercase tracking-[0.3em] xl:tracking-[0.4em] max-h-[70vh] overflow-y-auto overflow-x-hidden pr-2 scrollbar-hide">
+        <div
+          ref="verticalNavContainer"
+          class="flex flex-col h-40 overflow-y-auto overflow-x-hidden scroll-smooth scrollbar-hide text-right"
         >
-          {{ number.toString().padStart(3, '0') }}
-        </button>
+          <button
+            v-for="number in baseNavigation"
+            :key="number"
+            type="button"
+            class="py-0.5 text-right transition-colors hover:text-white focus:outline-none"
+            :class="[
+              number === pokemon.id
+                ? 'text-white font-bold text-base xl:text-lg tracking-[0.4em]'
+                : 'text-white/40 tracking-[0.35em]'
+            ]"
+            :aria-current="number === pokemon.id ? 'true' : undefined"
+            :ref="(el) => setVerticalButtonRef(el, number)"
+            @click="emit('select', number)"
+          >
+            {{ number.toString().padStart(3, '0') }}
+          </button>
+        </div>
         <div class="mt-4 xl:mt-6 flex flex-col items-center gap-3 xl:gap-4">
           <div class="h-10 w-10 xl:h-12 xl:w-12 rounded-full border border-white/30 flex items-center justify-center">
             <svg class="w-5 h-5 xl:w-6 xl:h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -120,7 +216,10 @@ const baseNavigation = computed(() => {
       </div>
     </div>
 
-    <nav class="border-t border-white/20 px-4 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs uppercase tracking-[0.3em] sm:tracking-[0.4em] overflow-x-auto scrollbar-hide">
+    <nav
+      ref="navContainer"
+      class="border-t border-white/20 px-4 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs uppercase tracking-[0.3em] sm:tracking-[0.4em] overflow-x-auto scrollbar-hide"
+    >
       <div class="flex gap-3 sm:gap-4 min-w-max">
         <button
           v-for="number in baseNavigation"
@@ -129,6 +228,7 @@ const baseNavigation = computed(() => {
           class="transition-colors hover:text-white focus:outline-none"
           :class="number === pokemon.id ? 'text-white font-bold' : 'text-white/50'"
           :aria-current="number === pokemon.id ? 'true' : undefined"
+          :ref="(el) => setNavButtonRef(el, number)"
           @click="emit('select', number)"
         >
           {{ number.toString().padStart(3, '0') }}

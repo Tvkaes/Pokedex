@@ -36,12 +36,18 @@ export interface PokemonSprites {
   front_default?: string | null
 }
 
+export interface PokemonCries {
+  latest?: string | null
+  legacy?: string | null
+}
+
 export interface PokemonData {
   id: number
   name: string
   height: number
   weight: number
   sprites: PokemonSprites
+  cries?: PokemonCries
   abilities: PokemonAbility[]
   types: PokemonType[]
   stats: PokemonStat[]
@@ -84,4 +90,5 @@ export interface PokemonDisplayData {
   height: number
   weight: number
   sprite: string
+  cryUrl?: string
 }

@@ -40,7 +40,8 @@ export const usePokemonStore = defineStore('pokemon', () => {
           data.sprites?.other?.['official-artwork']?.front_default ??
           data.sprites?.other?.home?.front_default ??
           data.sprites?.front_default ??
-          ''
+          '',
+        cryUrl: data.cries?.latest ?? data.cries?.legacy ?? undefined,
       }
     } catch (err) {
       console.error(err)
