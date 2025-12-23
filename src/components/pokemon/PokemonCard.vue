@@ -8,6 +8,10 @@ const props = defineProps<{
   primaryType: string
 }>()
 
+const emit = defineEmits<{
+  select: [id: number]
+}>()
+
 const typeColor = computed(() => getTypeColor(props.primaryType))
 
 const numberColumn = computed(() => {
@@ -90,15 +94,18 @@ const baseNavigation = computed(() => {
         </div>
       </div>
 
-      <div class="hidden lg:flex flex-col items-end gap-1 xl:gap-2 text-right text-xs xl:text-sm uppercase tracking-[0.3em] xl:tracking-[0.4em]">
-        <span 
-          v-for="number in numberColumn" 
-          :key="number" 
-          class="transition-colors cursor-pointer hover:text-white"
+      <div class="hidden lg:flex flex-col items-end gap-1 xl:gap-2 text-right text-xs xl:text-sm uppercase tracking-[0.3em] xl:tracking-[0.4em] max-h-[70vh] overflow-y-auto pr-2 scrollbar-hide">
+        <button
+          v-for="number in numberColumn"
+          :key="number"
+          type="button"
+          class="transition-colors hover:text-white focus:outline-none"
           :class="number === pokemon.id ? 'text-white font-bold text-base xl:text-lg' : 'text-white/50'"
+          :aria-current="number === pokemon.id ? 'true' : undefined"
+          @click="emit('select', number)"
         >
           {{ number.toString().padStart(3, '0') }}
-        </span>
+        </button>
         <div class="mt-4 xl:mt-6 flex flex-col items-center gap-3 xl:gap-4">
           <div class="h-10 w-10 xl:h-12 xl:w-12 rounded-full border border-white/30 flex items-center justify-center">
             <svg class="w-5 h-5 xl:w-6 xl:h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -115,14 +122,17 @@ const baseNavigation = computed(() => {
 
     <nav class="border-t border-white/20 px-4 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs uppercase tracking-[0.3em] sm:tracking-[0.4em] overflow-x-auto scrollbar-hide">
       <div class="flex gap-3 sm:gap-4 min-w-max">
-        <span
+        <button
           v-for="number in baseNavigation"
           :key="number"
-          class="cursor-pointer transition-colors hover:text-white"
+          type="button"
+          class="transition-colors hover:text-white focus:outline-none"
           :class="number === pokemon.id ? 'text-white font-bold' : 'text-white/50'"
+          :aria-current="number === pokemon.id ? 'true' : undefined"
+          @click="emit('select', number)"
         >
           {{ number.toString().padStart(3, '0') }}
-        </span>
+        </button>
       </div>
     </nav>
   </div>
