@@ -28,12 +28,15 @@ export interface PokemonSprites {
   other?: {
     ['official-artwork']?: {
       front_default?: string | null
+      front_shiny?: string | null
     }
     home?: {
       front_default?: string | null
+      front_shiny?: string | null
     }
   }
   front_default?: string | null
+  front_shiny?: string | null
 }
 
 export interface PokemonCries {
@@ -90,5 +93,6 @@ export interface PokemonDisplayData {
   height: number
   weight: number
   sprite: string
+  spriteShiny?: string | null
   cryUrl?: string
 }

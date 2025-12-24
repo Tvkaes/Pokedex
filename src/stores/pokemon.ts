@@ -41,6 +41,11 @@ export const usePokemonStore = defineStore('pokemon', () => {
           data.sprites?.other?.home?.front_default ??
           data.sprites?.front_default ??
           '',
+        spriteShiny:
+          data.sprites?.other?.['official-artwork']?.front_shiny ??
+          data.sprites?.other?.home?.front_shiny ??
+          data.sprites?.front_shiny ??
+          null,
         cryUrl: data.cries?.latest ?? data.cries?.legacy ?? undefined,
       }
     } catch (err) {

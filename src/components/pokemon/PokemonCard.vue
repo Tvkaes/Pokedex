@@ -15,8 +15,49 @@ const emit = defineEmits<{
 }>()
 
 const typeColor = computed(() => getTypeColor(props.primaryType))
-
 const backgroundLabel = computed(() => props.pokemon.nativeName ?? props.pokemon.name.toUpperCase())
+const isFlyingType = computed(() => props.pokemon.types?.some((type) => type.type.name === 'flying') ?? false)
+
+const spriteMotion = computed(() => ({
+  initial: {
+    scale: 0.45,
+    opacity: 0,
+    y: 60,
+    rotate: -8,
+    filter: 'blur(12px)',
+  },
+  enter: {
+    scale: isFlyingType.value ? 1.05 : 1,
+    opacity: 1,
+    y: 0,
+    rotate: 0,
+    filter: 'blur(0px)',
+    transition: {
+      type: 'spring',
+      stiffness: 140,
+      damping: 20,
+      mass: 0.8,
+    },
+  },
+}))
+
+const auraMotion = computed(() => ({
+  initial: {
+    scale: 0.5,
+    opacity: 0,
+    y: 40,
+  },
+  enter: {
+    scale: 1,
+    opacity: 0.75,
+    y: 0,
+    transition: {
+      duration: 0.7,
+      delay: 0.05,
+      ease: 'easeOut',
+    },
+  },
+}))
 
 const imperialHeight = computed(() => {
   const meters = props.pokemon.height
@@ -43,6 +84,10 @@ const verticalNavContainer = ref<HTMLElement | null>(null)
 const navButtonRefs = new Map<number, HTMLElement>()
 const verticalButtonRefs = new Map<number, HTMLElement>()
 const cryAudio = ref<HTMLAudioElement | null>(null)
+const showShiny = ref(false)
+
+const hasShiny = computed(() => Boolean(props.pokemon.spriteShiny))
+const displaySprite = computed(() => (showShiny.value && props.pokemon.spriteShiny ? props.pokemon.spriteShiny : props.pokemon.sprite))
 
 function setNavButtonRef(el: Element | ComponentPublicInstance | null, number: number) {
   if (el instanceof HTMLElement) {
@@ -112,12 +157,18 @@ async function playCry(url?: string) {
   }
 }
 
+function toggleShiny() {
+  if (!hasShiny.value) return
+  showShiny.value = !showShiny.value
+}
+
 watch(
   () => props.pokemon.id,
   (newId) => {
     scrollSelectedIntoView(newId)
     scrollVerticalSelectedIntoView(newId)
     void playCry(props.pokemon.cryUrl)
+    showShiny.value = false
   },
   { immediate: true }
 )
@@ -167,16 +218,47 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="relative flex flex-col items-center justify-center order-first lg:order-none">
-        <div class="absolute w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 blur-[100px] opacity-50 rounded-full" :style="{ backgroundColor: typeColor.glow }" />
-        <img
-          :src="pokemon.sprite"
-          :alt="pokemon.name"
-          loading="eager"
-          fetchpriority="high"
-          class="relative w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96 object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.4)] transition-transform duration-500 hover:scale-105"
+        <div
+          :key="`${pokemon.id}-aura`"
+          class="absolute w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 blur-[100px] opacity-50 rounded-full"
+          :style="{ backgroundColor: typeColor.glow }"
+          v-motion="auraMotion"
         />
-        <div class="mt-4 lg:mt-6 text-center text-xs sm:text-sm uppercase tracking-[0.3em] text-white/80">
-          Bio · {{ pokemon.genus || 'Pokémon' }}
+        <div
+          :key="`${pokemon.id}-sprite`"
+          v-motion="spriteMotion"
+        >
+          <img
+            :src="displaySprite"
+            :alt="showShiny ? `${pokemon.name} shiny` : pokemon.name"
+            loading="eager"
+            fetchpriority="high"
+            class="relative w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96 object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.4)] transition-transform duration-500 hover:scale-105"
+          />
+        </div>
+        <div class="flex flex-col items-center gap-3 mt-4 lg:mt-6">
+          <div class="text-center text-xs sm:text-sm uppercase tracking-[0.3em] text-white/80">
+            Bio · {{ pokemon.genus || 'Pokémon' }}
+          </div>
+          <button
+            v-if="hasShiny"
+            type="button"
+            class="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm text-[10px] sm:text-xs uppercase tracking-[0.3em] text-white transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            :aria-pressed="showShiny"
+            :title="showShiny ? 'Ver sprite normal' : 'Ver sprite shiny'"
+            @click="toggleShiny"
+          >
+            <span>{{ showShiny ? 'Shiny Form' : 'Base Form' }}</span>
+            <span
+              class="relative inline-flex h-5 w-10 items-center rounded-full transition duration-300"
+              :class="showShiny ? 'bg-white' : 'bg-white/30'"
+            >
+              <span
+                class="inline-block h-4 w-4 rounded-full transition duration-300 bg-surface-900"
+                :class="showShiny ? 'translate-x-5' : 'translate-x-1 bg-white'"
+              />
+            </span>
+          </button>
         </div>
       </div>
 

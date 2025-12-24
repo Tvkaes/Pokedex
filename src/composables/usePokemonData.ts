@@ -38,7 +38,12 @@ export function usePokemonData() {
           data.sprites?.other?.['official-artwork']?.front_default ??
           data.sprites?.other?.home?.front_default ??
           data.sprites?.front_default ??
-          ''
+          '',
+        spriteShiny:
+          data.sprites?.other?.['official-artwork']?.front_shiny ??
+          data.sprites?.other?.home?.front_shiny ??
+          data.sprites?.front_shiny ??
+          null
       }
     } catch (err) {
       error.value = 'Pokémon no encontrado. Intenta con otro nombre o número.'
