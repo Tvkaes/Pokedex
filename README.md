@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://crystalpng.com/wp-content/uploads/2021/12/pokemon-logo.png" alt="Pokémon logo" width="180" />
+  <img src="./public/pokemon-logo.png" alt="Pokémon logo" width="180" />
   <h1>Pokedex V1 · Modern Pokémon Explorer</h1>
   <p>A cinematic way to browse Pokémon, blending sleek UI with real Pokédex data.</p>
 </div>
