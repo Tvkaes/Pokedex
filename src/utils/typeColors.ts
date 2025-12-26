@@ -1,10 +1,10 @@
-interface TypeColorConfig {
+export interface TypeColorConfig {
   color: string
   gradient: string
   glow: string
 }
 
-export const TYPE_COLORS: Record<string, TypeColorConfig> = {
+export const TYPE_COLORS = {
   normal: { color: '#9CA3AF', gradient: 'from-gray-400 via-gray-500 to-gray-600', glow: 'rgba(156,163,175,0.35)' },
   fire: { color: '#F97316', gradient: 'from-orange-500 via-red-500 to-pink-500', glow: 'rgba(249,115,22,0.4)' },
   water: { color: '#38BDF8', gradient: 'from-sky-400 via-blue-500 to-indigo-500', glow: 'rgba(56,189,248,0.35)' },
@@ -23,9 +23,11 @@ export const TYPE_COLORS: Record<string, TypeColorConfig> = {
   dark: { color: '#4B5563', gradient: 'from-slate-600 via-slate-700 to-slate-800', glow: 'rgba(75,85,99,0.35)' },
   steel: { color: '#94A3B8', gradient: 'from-slate-300 via-slate-400 to-slate-500', glow: 'rgba(148,163,184,0.35)' },
   fairy: { color: '#F472B6', gradient: 'from-pink-300 via-pink-400 to-rose-400', glow: 'rgba(244,114,182,0.35)' }
-}
+} as const satisfies Record<string, TypeColorConfig>
+
+type TypeColorName = keyof typeof TYPE_COLORS
 
 export function getTypeColor(type?: string): TypeColorConfig {
   if (!type) return TYPE_COLORS.normal
-  return TYPE_COLORS[type] ?? TYPE_COLORS.normal
+  return TYPE_COLORS[type as TypeColorName] ?? TYPE_COLORS.normal
 }
