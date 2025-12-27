@@ -7,9 +7,19 @@ import type { PokemonDisplayData } from '@/types/pokemon.types'
 export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
   const showShiny = ref(false)
   const cryAudio = ref<HTMLAudioElement | null>(null)
+  const shinyAudio = ref<HTMLAudioElement | null>(null)
   const hasUserInteracted = ref(false)
+  const spriteAnimationKey = ref(0)
+  const shinySoundUrl = '/sounds/shiny.wav'
+  const activeMegaFormIndex = ref<number | null>(null)
 
   const isFlyingType = computed(() => pokemon.value.types?.some((type) => type.type.name === 'flying') ?? false)
+  const megaForms = computed(() => pokemon.value.alternateForms ?? [])
+  const hasMegaEvolution = computed(() => megaForms.value.length > 0)
+  const activeMegaForm = computed(() => {
+    if (activeMegaFormIndex.value === null) return null
+    return megaForms.value[activeMegaFormIndex.value] ?? null
+  })
 
   const spriteMotion = computed(() => ({
     initial: {
@@ -53,15 +63,23 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
   }))
 
   const hasShiny = computed(() => Boolean(pokemon.value.spriteShiny))
-  const displaySprite = computed(() =>
-    showShiny.value && pokemon.value.spriteShiny ? pokemon.value.spriteShiny : pokemon.value.sprite
-  )
+  const displaySprite = computed(() => {
+    if (activeMegaForm.value) {
+      return activeMegaForm.value.sprite
+    }
+
+    return showShiny.value && pokemon.value.spriteShiny ? pokemon.value.spriteShiny : pokemon.value.sprite
+  })
+
+  function replaySpriteAnimation() {
+    spriteAnimationKey.value += 1
+  }
 
   /**
    * Switches between base and shiny sprite, guarded by shiny availability.
    */
   function toggleShiny() {
-    if (!hasShiny.value) return
+    if (!hasShiny.value || activeMegaFormIndex.value !== null) return
     showShiny.value = !showShiny.value
   }
 
@@ -70,6 +88,25 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
    */
   function resetShiny() {
     showShiny.value = false
+  }
+
+  function resetMegaForm() {
+    activeMegaFormIndex.value = null
+  }
+
+  function selectMegaForm(index: number | null) {
+    if (index === null) {
+      resetMegaForm()
+      void playCry(pokemon.value.cryUrl)
+      return
+    }
+
+    if (!megaForms.value[index]) return
+
+    resetShiny()
+    activeMegaFormIndex.value = index
+    replaySpriteAnimation()
+    void playCry(megaForms.value[index]?.cryUrl ?? pokemon.value.cryUrl)
   }
 
   /**
@@ -91,14 +128,46 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
     }
   }
 
+  async function playShinyCue() {
+    if (typeof Audio === 'undefined' || !hasUserInteracted.value) return
+
+    shinyAudio.value?.pause()
+
+    const audio = new Audio(shinySoundUrl)
+    audio.currentTime = 0
+    shinyAudio.value = audio
+
+    try {
+      await audio.play()
+    } catch (error) {
+      console.warn('No se pudo reproducir el sonido shiny.', error)
+    }
+  }
+
   watch(
     () => pokemon.value.id,
     () => {
       resetShiny()
+      resetMegaForm()
       void playCry(pokemon.value.cryUrl)
+      replaySpriteAnimation()
     },
     { immediate: true }
   )
+
+  watch(
+    showShiny,
+    (isShiny, prev) => {
+      replaySpriteAnimation()
+      if (isShiny && !prev) {
+        void playShinyCue()
+      }
+    }
+  )
+
+  watch(activeMegaFormIndex, () => {
+    replaySpriteAnimation()
+  })
 
   onMounted(() => {
     if (typeof window === 'undefined') return
@@ -114,14 +183,21 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
   onBeforeUnmount(() => {
     cryAudio.value?.pause()
     cryAudio.value = null
+    shinyAudio.value?.pause()
+    shinyAudio.value = null
   })
 
   return {
     auraMotion,
     displaySprite,
     hasShiny,
+    hasMegaEvolution,
+    megaForms,
+    activeMegaFormIndex,
     showShiny,
+    spriteAnimationKey,
     spriteMotion,
     toggleShiny,
+    selectMegaForm,
   }
 }

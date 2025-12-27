@@ -1,15 +1,16 @@
 import { fetchPokemon, fetchPokemonItem, fetchPokemonSpecies } from '@/utils/api'
 import { formatPokemonId, formatPokemonName, extractDescription, extractGenus, extractNativeName, mapStats } from '@/utils/helpers'
 import type { PokemonDetails } from '@/types/pokemon-details.types'
-import type { PokemonAlternateForm, PokemonData, PokemonGridEntry } from '@/types/pokemon.types'
+import type { PokemonAlternateForm, PokemonData, PokemonDisplayData, PokemonGridEntry } from '@/types/pokemon.types'
 import { POKEMON_GENERATIONS } from '@pokedex/data/generations'
 import { buildItemSpriteUrl, getMegaStoneSlug } from '@pokedex/data/mega-stones'
 
 function mapDisplayData(
   data: PokemonData,
-  speciesData: Awaited<ReturnType<typeof fetchPokemonSpecies>>
+  speciesData: Awaited<ReturnType<typeof fetchPokemonSpecies>>,
+  alternateForms: PokemonAlternateForm[] = []
 ): PokemonDetails['display'] {
-  return {
+  const display: PokemonDisplayData = {
     id: data.id,
     formattedId: formatPokemonId(data.id),
     name: formatPokemonName(data.name),
@@ -32,7 +33,11 @@ function mapDisplayData(
       data.sprites?.front_shiny ??
       null,
     cryUrl: data.cries?.latest ?? data.cries?.legacy ?? undefined,
+    hasMegaEvolution: alternateForms.length > 0,
+    alternateForms,
   }
+
+  return display
 }
 
 const SPECIAL_FORM_KEYWORDS = ['mega', 'primal']
@@ -101,6 +106,7 @@ async function extractAlternateForms(
             formData.sprites?.front_default ??
             '',
           primaryType: formData.types?.[0]?.type?.name ?? 'normal',
+          cryUrl: formData.cries?.latest ?? formData.cries?.legacy ?? undefined,
           ...(stone ? { stone } : {}),
         }
 
@@ -185,11 +191,12 @@ function mapGridEntry(
 export async function getPokemonDetails(identifier: string | number): Promise<PokemonDetails> {
   const [data, species] = await Promise.all([fetchPokemon(identifier), fetchPokemonSpecies(identifier)])
   const primaryType = data.types?.[0]?.type?.name ?? 'normal'
+  const alternateForms = await extractAlternateForms(species)
 
   return {
     primaryType,
     raw: data,
     species,
-    display: mapDisplayData(data, species),
+    display: mapDisplayData(data, species, alternateForms),
   }
 }

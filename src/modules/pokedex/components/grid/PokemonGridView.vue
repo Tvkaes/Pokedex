@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { PokemonGridEntry } from '@/types/pokemon.types'
-import PokemonGridCard from './PokemonGridCard.vue';
-
+import PokemonGridCard from './PokemonGridCard.vue'
+import PokemonGridSkeleton from './PokemonGridSkeleton.vue'
 
 const props = defineProps<{
   entries: PokemonGridEntry[]
@@ -22,11 +22,7 @@ function handleSelect(id: number) {
 
 <template>
   <div class="min-h-screen w-full px-4 pb-12 pt-28 sm:px-8 lg:px-16">
-    <div v-if="isLoading" class="flex min-h-[50vh] items-center justify-center">
-      <div class="text-center uppercase tracking-[0.4em] text-white/80">
-        Loading entries...
-      </div>
-    </div>
+    <PokemonGridSkeleton v-if="isLoading" />
 
     <TransitionGroup v-else-if="hasEntries" name="grid-fade" tag="div" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <PokemonGridCard v-for="entry in entries" :key="entry.id" :entry="entry" @select="handleSelect" />

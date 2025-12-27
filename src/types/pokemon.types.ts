@@ -103,6 +103,8 @@ export interface PokemonDisplayData {
   sprite: string
   spriteShiny?: string | null
   cryUrl?: string
+  hasMegaEvolution?: boolean
+  alternateForms?: PokemonAlternateForm[]
 }
 
 export interface PokemonAlternateForm {
@@ -115,6 +117,7 @@ export interface PokemonAlternateForm {
     slug: string
     sprite?: string | null
   }
+  cryUrl?: string
 }
 
 export interface PokemonGridEntry {

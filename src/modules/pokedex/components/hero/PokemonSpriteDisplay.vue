@@ -10,6 +10,9 @@ interface StarParticle {
   delay: number
   scale: number
   color: string
+  rotation: number
+  duration: number
+  blur: number
 }
 
 const props = defineProps<{
@@ -18,6 +21,7 @@ const props = defineProps<{
   displaySprite: string
   showShiny: boolean
   hasShiny: boolean
+  spriteAnimationKey: number
   auraMotion: Record<string, unknown>
   spriteMotion: Record<string, unknown>
 }>()
@@ -38,23 +42,32 @@ watch(
   }
 )
 
+const burstColors = ['#fde047', '#fee2e2', '#f9a8d4', '#bae6fd', '#c4b5fd'] as const
+
+function randomBurstColor() {
+  return burstColors[Math.floor(Math.random() * burstColors.length)] ?? '#fde047'
+}
+
 function triggerStarBurst() {
   if (clearStarsTimeout) {
     clearTimeout(clearStarsTimeout)
     clearStarsTimeout = null
   }
 
-  const starCount = 24
+  const starCount = 28
   const newStars: StarParticle[] = Array.from({ length: starCount }, (_, index) => {
-    const distance = 190 + Math.random() * 220
-    const angle = (index / starCount) * Math.PI * 2 + Math.random() * 0.4
+    const distance = 160 + Math.random() * 260
+    const angle = (index / starCount) * Math.PI * 2 + Math.random() * 0.35
     return {
       id: `${props.pokemon.id}-star-${Date.now()}-${index}`,
       x: Math.cos(angle) * distance,
       y: Math.sin(angle) * distance,
-      delay: Math.random() * 0.12,
-      scale: 0.6 + Math.random() * 0.7,
-      color: Math.random() > 0.5 ? '#fde047' : '#38bdf8',
+      delay: Math.random() * 0.18,
+      scale: 0.55 + Math.random() * 0.9,
+      color: randomBurstColor(),
+      rotation: -25 + Math.random() * 50,
+      duration: 1.2 + Math.random() * 0.7,
+      blur: 3 + Math.random() * 10,
     }
   })
 
@@ -62,7 +75,7 @@ function triggerStarBurst() {
   clearStarsTimeout = setTimeout(() => {
     shinyStars.value = []
     clearStarsTimeout = null
-  }, 1000)
+  }, Math.max(...newStars.map((star) => star.duration + star.delay)) * 1000 + 250)
 }
 
 function starStyle(star: StarParticle) {
@@ -71,6 +84,10 @@ function starStyle(star: StarParticle) {
     '--y': `${star.y}px`,
     '--delay': `${star.delay}s`,
     '--scale': star.scale.toString(),
+    '--spin': `${star.rotation}deg`,
+    '--duration': `${star.duration}s`,
+    '--blur': `${star.blur}px`,
+    '--glow': star.color,
     background: `radial-gradient(circle at 50% 50%, ${star.color}, transparent 70%)`,
   }
 }
@@ -86,7 +103,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="relative flex flex-col items-center justify-center">
     <div
-      :key="`${pokemon.id}-aura`"
+      :key="`${pokemon.id}-aura-${spriteAnimationKey}`"
       class="absolute w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 blur-[100px] opacity-50 rounded-full"
       :style="{ backgroundColor: typeColor.glow }"
       v-motion="auraMotion"
@@ -102,7 +119,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
     <div
-      :key="`${pokemon.id}-sprite`"
+      :key="`${pokemon.id}-sprite-${spriteAnimationKey}`"
       v-motion="spriteMotion"
       class="relative z-10"
     >
@@ -148,30 +165,50 @@ onBeforeUnmount(() => {
   left: 50%;
   width: 34px;
   height: 34px;
-  transform: translate(-50%, -50%);
   clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
   opacity: 0;
-  animation: starBurst 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  animation: starBurst var(--duration, 1.4s) linear forwards;
   animation-delay: var(--delay);
-  filter: drop-shadow(0 0 16px rgba(248, 250, 252, 0.9));
+  filter: drop-shadow(0 0 20px var(--glow, rgba(248, 250, 252, 0.9))) blur(var(--blur, 4px));
+  mix-blend-mode: screen;
 }
 
 @keyframes starBurst {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0);
+    transform: translate(-50%, -50%) scale(0.15) rotate(0deg);
+    filter: blur(calc(var(--blur, 4px) * 1.35));
+  }
+  12% {
+    opacity: 0.25;
+    transform: translate(-50%, -50%) scale(0.55) rotate(calc(var(--spin, 0deg) / 6));
+    filter: blur(calc(var(--blur, 4px) * 0.95));
   }
   35% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(calc(var(--scale, 1) * 1.75)) rotate(16deg);
+    transform: translate(-50%, -50%) scale(calc(var(--scale, 1) * 1.85)) rotate(calc(var(--spin, 0deg) / 1.8));
+    filter: blur(calc(var(--blur, 4px) * 0.4));
   }
   70% {
     opacity: 0.55;
-    transform: translate(calc(-50% + var(--x) * 0.65), calc(-50% + var(--y) * 0.65)) scale(calc(var(--scale, 1) * 0.85));
+    transform: translate(calc(-50% + var(--x) * 0.65), calc(-50% + var(--y) * 0.65))
+      scale(calc(var(--scale, 1) * 0.9))
+      rotate(calc(var(--spin, 0deg) * 1.1));
+    filter: blur(calc(var(--blur, 4px) * 0.7));
+  }
+  88% {
+    opacity: 0.15;
+    transform: translate(calc(-50% + var(--x) * 0.9), calc(-50% + var(--y) * 0.9))
+      scale(calc(var(--scale, 1) * 0.4))
+      rotate(calc(var(--spin, 0deg) * 1.3));
+    filter: blur(calc(var(--blur, 4px) * 1.1));
   }
   100% {
     opacity: 0;
-    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0);
+    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.1)
+      rotate(calc(var(--spin, 0deg) * 1.4));
+    filter: blur(calc(var(--blur, 4px) * 1.5));
   }
 }
 </style>

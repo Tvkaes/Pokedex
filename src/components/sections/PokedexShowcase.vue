@@ -69,11 +69,7 @@ onMounted(() => {
             <p>Loading entry...</p>
           </div>
         </div>
-        <div v-else key="hero-empty" class="min-h-screen flex items-center justify-center">
-          <div class="text-center text-white/80 uppercase tracking-[0.4em]">
-            Search your first Pokémon
-          </div>
-        </div>
+        <div v-else key="hero-empty" class="min-h-screen flex items-center justify-center"></div>
       </template>
       <div v-else key="grid-view" class="relative z-10 min-h-screen pt-6">
         <PokedexGenerationFilterPanel

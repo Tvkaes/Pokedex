@@ -23,7 +23,19 @@ const pokemonRef = computed(() => props.pokemon)
 const typeColor = computed(() => getTypeColor(props.primaryType))
 
 const { backgroundLabel, imperialHeight, imperialWeight } = usePokemonFormatting(pokemonRef)
-const { auraMotion, displaySprite, hasShiny, showShiny, spriteMotion, toggleShiny } = usePokemonMedia(pokemonRef)
+const {
+  auraMotion,
+  displaySprite,
+  hasShiny,
+  hasMegaEvolution,
+  megaForms,
+  activeMegaFormIndex,
+  showShiny,
+  spriteAnimationKey,
+  spriteMotion,
+  toggleShiny,
+  selectMegaForm,
+} = usePokemonMedia(pokemonRef)
 const {
   visibleNavigation,
   setHorizontalButtonRef,
@@ -56,7 +68,15 @@ function handleSelect(id: number) {
 
     <div class="relative flex-1 grid gap-6 lg:gap-12 lg:grid-cols-[1.2fr_1fr_0.35fr] p-6 sm:p-8 lg:p-12 xl:p-16 items-center">
       <div class="order-last lg:order-first">
-        <PokemonInfoPanel :pokemon="pokemon" :imperial-height="imperialHeight" :imperial-weight="imperialWeight" />
+        <PokemonInfoPanel
+          :pokemon="pokemon"
+          :imperial-height="imperialHeight"
+          :imperial-weight="imperialWeight"
+          :has-mega-evolution="hasMegaEvolution"
+          :mega-forms="megaForms"
+          :active-mega-form-index="activeMegaFormIndex"
+          @select-mega-form="selectMegaForm"
+        />
       </div>
 
       <div class="order-first lg:order-none">
@@ -66,6 +86,7 @@ function handleSelect(id: number) {
           :display-sprite="displaySprite"
           :show-shiny="showShiny"
           :has-shiny="hasShiny"
+          :sprite-animation-key="spriteAnimationKey"
           :aura-motion="auraMotion"
           :sprite-motion="spriteMotion"
           @toggle-shiny="toggleShiny"
