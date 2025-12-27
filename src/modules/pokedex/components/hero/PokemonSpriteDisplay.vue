@@ -1,6 +1,16 @@
 <script setup lang="ts">
+import { onBeforeUnmount, ref, watch } from 'vue'
 import type { PokemonDisplayData } from '@/types/pokemon.types'
 import type { TypeColorConfig } from '@/utils/typeColors'
+
+interface StarParticle {
+  id: string
+  x: number
+  y: number
+  delay: number
+  scale: number
+  color: string
+}
 
 const props = defineProps<{
   pokemon: PokemonDisplayData
@@ -15,6 +25,62 @@ const props = defineProps<{
 const emit = defineEmits<{
   toggleShiny: []
 }>()
+
+const shinyStars = ref<StarParticle[]>([])
+let clearStarsTimeout: ReturnType<typeof setTimeout> | null = null
+
+watch(
+  () => props.showShiny,
+  (isShiny, prev) => {
+    if (isShiny && !prev) {
+      triggerStarBurst()
+    }
+  }
+)
+
+function triggerStarBurst() {
+  if (clearStarsTimeout) {
+    clearTimeout(clearStarsTimeout)
+    clearStarsTimeout = null
+  }
+
+  const starCount = 24
+  const newStars: StarParticle[] = Array.from({ length: starCount }, (_, index) => {
+    const distance = 190 + Math.random() * 220
+    const angle = (index / starCount) * Math.PI * 2 + Math.random() * 0.4
+    return {
+      id: `${props.pokemon.id}-star-${Date.now()}-${index}`,
+      x: Math.cos(angle) * distance,
+      y: Math.sin(angle) * distance,
+      delay: Math.random() * 0.12,
+      scale: 0.6 + Math.random() * 0.7,
+      color: Math.random() > 0.5 ? '#fde047' : '#38bdf8',
+    }
+  })
+
+  shinyStars.value = newStars
+  clearStarsTimeout = setTimeout(() => {
+    shinyStars.value = []
+    clearStarsTimeout = null
+  }, 1000)
+}
+
+function starStyle(star: StarParticle) {
+  return {
+    '--x': `${star.x}px`,
+    '--y': `${star.y}px`,
+    '--delay': `${star.delay}s`,
+    '--scale': star.scale.toString(),
+    background: `radial-gradient(circle at 50% 50%, ${star.color}, transparent 70%)`,
+  }
+}
+
+onBeforeUnmount(() => {
+  if (clearStarsTimeout) {
+    clearTimeout(clearStarsTimeout)
+    clearStarsTimeout = null
+  }
+})
 </script>
 
 <template>
@@ -25,9 +91,20 @@ const emit = defineEmits<{
       :style="{ backgroundColor: typeColor.glow }"
       v-motion="auraMotion"
     />
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 mix-blend-screen">
+      <div class="relative w-[42rem] h-[42rem] sm:w-[52rem] sm:h-[52rem]">
+        <span
+          v-for="star in shinyStars"
+          :key="star.id"
+          class="burst-star"
+          :style="starStyle(star)"
+        />
+      </div>
+    </div>
     <div
       :key="`${pokemon.id}-sprite`"
       v-motion="spriteMotion"
+      class="relative z-10"
     >
       <img
         :src="displaySprite"
@@ -63,3 +140,38 @@ const emit = defineEmits<{
     </div>
   </div>
 </template>
+
+<style scoped>
+.burst-star {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  transform: translate(-50%, -50%);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  opacity: 0;
+  animation: starBurst 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--delay);
+  filter: drop-shadow(0 0 16px rgba(248, 250, 252, 0.9));
+}
+
+@keyframes starBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(calc(var(--scale, 1) * 1.75)) rotate(16deg);
+  }
+  70% {
+    opacity: 0.55;
+    transform: translate(calc(-50% + var(--x) * 0.65), calc(-50% + var(--y) * 0.65)) scale(calc(var(--scale, 1) * 0.85));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0);
+  }
+}
+</style>
