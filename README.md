@@ -40,24 +40,29 @@ It delivers **immersive presentation**, **frictionless interactions**, and **acc
 
 ```
 src/
-├── components/
-│   ├── pokemon/        # Hero card, sprite display, info panel, navigation widgets
-│   ├── layout/         # App shell + footer
-│   └── ui/             # Reusable primitives
+├── modules/
+│   └── pokedex/
+│       ├── components/
+│       │   ├── hero/          # Hero view, info panel, sprite display, navigation
+│       │   ├── grid/          # Grid view, cards, mega toggle buttons
+│       │   ├── controls/      # View toggle + shared UI
+│       │   ├── filters/       # Generation filters and selectors
+│       │   └── shared/        # Type badges and reusable atoms
+│       ├── data/              # Generation metadata + mega stone mapping
+│       └── ...additional module assets
 ├── composables/
-│   ├── usePokemonFormatting.ts
-│   ├── usePokemonMedia.ts
-│   └── usePokemonNavigation.ts
+│   ├── usePokemonMedia.ts      # Sprite motion, shiny toggles, cry playback
+│   └── usePokemonNavigation.ts # Horizontal + vertical navigation windows
 ├── services/
-│   └── pokemonService.ts        # Fetch + map Pokémon + species data
+│   └── pokemonService.ts       # Fetch + map Pokémon, species, mega/primal info
 ├── stores/
-│   └── pokemon.ts               # Pinia store orchestrating the hero card state
+│   └── pokemon.ts              # Pinia store orchestrating hero/grid state
 ├── types/
-│   └── pokemon.types.ts         # Shared interfaces
+│   └── pokemon.types.ts        # Shared interfaces + mega form contracts
 └── utils/
-    ├── api.ts                   # Cached PokéAPI client
-    ├── helpers.ts               # Formatting/mapping helpers
-    └── typeColors.ts            # Color palettes per Pokémon type
+    ├── api.ts                  # Cached PokéAPI client (pokemon/species/items)
+    ├── helpers.ts              # Formatting/mapping helpers
+    └── typeColors.ts           # Color palettes per Pokémon type
 ```
 
 ---
@@ -68,6 +73,18 @@ src/
 - **Aura rendering** – Glow colors adapt to the active type palette for instant visual storytelling.
 - **Navigation duality** – Desktop vertical nav + mobile horizontal nav keep the UX cohesive.
 - **Shiny toggle & cries** – Media composable manages permissions, motion, and playback seamlessly.
+- **Mega/primal awareness** – Grid entries detect alternate forms, surface accurate mega-stone sprites, and animate + play cries when toggling.
+- **Multi-stone UX** – Pokémon with more than one mega evolution display a responsive row of stones so each form is one click away.
+
+---
+
+## 🔄 Recent Enhancements
+
+- **Modular architecture:** All Pokédex-specific UI and data now live under `src/modules/pokedex`, enabling future feature modules to coexist cleanly.
+- **Generation-first grid:** Pinia caches grid entries per generation while the service layer parallelizes fetches for smooth scrolling.
+- **Mega evolution indicator:** Grid cards show a glassy mega stone button when alternate forms exist, complete with official sprites gathered via PokéAPI items.
+- **Interactive mega toggles:** Clicking a stone animates the sprite (enter + exit pulses), swaps stats/name/ID, and replays the Pokémon cry for tactile feedback.
+- **Cry + media parity:** Grid interactions reuse the same cry handling as the hero card, so audio feedback is consistent across views.
 
 ---
 
