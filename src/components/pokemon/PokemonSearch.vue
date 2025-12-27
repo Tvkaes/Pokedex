@@ -42,13 +42,13 @@ function handleSuggestion(name: string) {
 
 <template>
   <div class="space-y-4">
-    <label class="block uppercase tracking-[0.3em] text-xs text-white/60">Buscar Pokémon</label>
+    <label class="block uppercase tracking-[0.3em] text-xs text-white/60">Search Pokémon</label>
     <div class="relative">
       <input
         type="text"
         :value="value"
         class="input input-lg w-full rounded-2xl bg-white/5 border border-white/10 text-lg text-white placeholder:text-white/30 focus:border-primary focus:outline-none"
-        placeholder="Nombre o número..."
+        placeholder="Name or number..."
         :disabled="loading"
         @input="handleInput"
         @keydown.enter.prevent="handleSubmit"
@@ -73,7 +73,7 @@ function handleSuggestion(name: string) {
       />
     </div>
     <div class="flex flex-wrap gap-2 text-sm text-white/60 uppercase tracking-[0.2em]">
-      <span>Sugerencias:</span>
+      <span>Suggestions:</span>
       <button
         v-for="suggestion in POPULAR_POKEMON"
         :key="suggestion"
@@ -86,10 +86,10 @@ function handleSuggestion(name: string) {
     </div>
     <div class="flex flex-wrap gap-4">
       <button class="btn btn-primary rounded-2xl px-8" type="button" :disabled="loading" @click="handleSubmit">
-        Buscar
+        Search
       </button>
       <button class="btn btn-ghost rounded-2xl px-8 text-white/70" type="button" :disabled="loading" @click="$emit('random')">
-        Aleatorio
+        Surprise me
       </button>
     </div>
   </div>

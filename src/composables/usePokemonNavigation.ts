@@ -2,7 +2,7 @@ import { computed, nextTick, ref, watch, type ComputedRef, type ComponentPublicI
 import { MAX_POKEMON_ID } from '@/utils/constants'
 
 type NavElement = HTMLElement | null
-const WINDOW_SIZE = 30
+const WINDOW_SIZE = MAX_POKEMON_ID
 
 /**
  * Tracks navigation focus, button refs, and viewport windows for the Pokémon selector lists.

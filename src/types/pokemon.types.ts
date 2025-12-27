@@ -58,6 +58,7 @@ export interface PokemonData {
 
 export interface PokemonSpeciesData {
   id: number
+  name?: string
   color: {
     name: string
   }
@@ -73,6 +74,13 @@ export interface PokemonSpeciesData {
   names: Array<{
     name: string
     language: { name: string }
+  }>
+  varieties: Array<{
+    is_default: boolean
+    pokemon: {
+      name: string
+      url: string
+    }
   }>
 }
 
@@ -95,4 +103,36 @@ export interface PokemonDisplayData {
   sprite: string
   spriteShiny?: string | null
   cryUrl?: string
+}
+
+export interface PokemonAlternateForm {
+  id: number
+  name: string
+  formattedId: string
+  sprite: string
+  primaryType: string
+  stone?: {
+    slug: string
+    sprite?: string | null
+  }
+}
+
+export interface PokemonGridEntry {
+  id: number
+  formattedId: string
+  name: string
+  nativeName?: string
+  sprite: string
+  primaryType: string
+  hasMegaEvolution: boolean
+  alternateForms?: PokemonAlternateForm[]
+  cryUrl?: string
+}
+
+export interface PokemonItemData {
+  id: number
+  name: string
+  sprites: {
+    default?: string | null
+  }
 }

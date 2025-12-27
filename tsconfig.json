@@ -18,7 +18,8 @@
     "noUncheckedIndexedAccess": true,
     "types": ["vite/client", "vitest/globals"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["src/*"],
+      "@pokedex/*": ["src/modules/pokedex/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts"],

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PokemonDisplayData } from '@/types/pokemon.types'
+import PokemonTypeBadge from '@pokedex/components/shared/PokemonTypeBadge.vue'
 
 defineProps<{
   pokemon: PokemonDisplayData
@@ -31,17 +32,11 @@ defineProps<{
     </div>
 
     <p class="text-sm sm:text-base max-w-md leading-relaxed text-white/90 line-clamp-4">
-      {{ pokemon.description || 'Descripción no disponible aún. Explora otra especie.' }}
+      {{ pokemon.description || 'Description not available yet. Try another species.' }}
     </p>
 
     <div class="flex flex-wrap gap-2 sm:gap-3">
-      <span
-        v-for="type in pokemon.types"
-        :key="type.type.name"
-        class="px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-white/30 uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs font-medium"
-      >
-        {{ type.type.name }}
-      </span>
+      <PokemonTypeBadge v-for="type in pokemon.types" :key="type.type.name" :label="type.type.name" />
     </div>
   </div>
 </template>
