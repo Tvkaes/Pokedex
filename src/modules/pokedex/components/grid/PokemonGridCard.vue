@@ -126,8 +126,15 @@ onBeforeUnmount(() => {
   }
 })
 
+function resolveCryUrl() {
+  if (isMegaActive.value) {
+    return activeForm.value?.cryUrl || props.entry.cryUrl
+  }
+  return props.entry.cryUrl
+}
+
 function playCry() {
-  const cryUrl = props.entry.cryUrl
+  const cryUrl = resolveCryUrl()
   if (!cryUrl) return
   try {
     cryAudio.value?.pause()
