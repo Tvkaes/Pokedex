@@ -56,10 +56,7 @@ function handleSelect(id: number) {
 </script>
 
 <template>
-  <div
-    class="relative min-h-screen w-full text-surface-50 flex flex-col"
-    :style="{ backgroundColor: typeColor.color || '#B3272C' }"
-  >
+  <div class="relative min-h-screen w-full text-surface-50 flex flex-col bg-transparent">
     <div class="absolute inset-0 overflow-hidden pointer-events-none select-none">
       <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.08] text-[25vw] md:text-[18vw] font-black tracking-tight leading-none whitespace-nowrap">
         {{ backgroundLabel }}

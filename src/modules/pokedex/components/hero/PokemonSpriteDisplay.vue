@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { PokemonDisplayData } from '@/types/pokemon.types'
 import type { TypeColorConfig } from '@/utils/typeColors'
 
-interface StarParticle {
-  id: string
-  x: number
-  y: number
-  delay: number
-  scale: number
-  color: string
-  rotation: number
+interface CanvasParticle {
+  angle: number
+  distance: number
   duration: number
-  blur: number
+  delay: number
+  color: string
+  size: number
+  rotation: number
 }
 
 const props = defineProps<{
@@ -30,8 +28,19 @@ const emit = defineEmits<{
   toggleShiny: []
 }>()
 
-const shinyStars = ref<StarParticle[]>([])
-let clearStarsTimeout: ReturnType<typeof setTimeout> | null = null
+const burstContainerRef = ref<HTMLDivElement | null>(null)
+const burstCanvasRef = ref<HTMLCanvasElement | null>(null)
+
+let burstCtx: CanvasRenderingContext2D | null = null
+let burstParticles: CanvasParticle[] = []
+let burstAnimationFrame: number | null = null
+let burstStartTime = 0
+let resizeObserver: ResizeObserver | null = null
+let motionMedia: MediaQueryList | null = null
+let motionListener: ((event: MediaQueryListEvent) => void) | null = null
+
+const reduceMotion = ref(false)
+const burstColors = ['#fde047', '#fee2e2', '#f9a8d4', '#bae6fd', '#c4b5fd'] as const
 
 watch(
   () => props.showShiny,
@@ -42,60 +51,165 @@ watch(
   }
 )
 
-const burstColors = ['#fde047', '#fee2e2', '#f9a8d4', '#bae6fd', '#c4b5fd'] as const
+function setupMotionPreference() {
+  if (typeof window === 'undefined') return
+  motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
+  reduceMotion.value = motionMedia.matches
+  motionListener = (event) => {
+    reduceMotion.value = event.matches
+  }
+  motionMedia.addEventListener('change', motionListener)
+}
 
 function randomBurstColor() {
   return burstColors[Math.floor(Math.random() * burstColors.length)] ?? '#fde047'
 }
 
-function triggerStarBurst() {
-  if (clearStarsTimeout) {
-    clearTimeout(clearStarsTimeout)
-    clearStarsTimeout = null
+function syncCanvasSize() {
+  if (typeof window === 'undefined') return
+  const canvas = burstCanvasRef.value
+  const container = burstContainerRef.value
+  if (!canvas || !container) return
+  const width = container.clientWidth
+  const height = container.clientHeight
+  const ratio = window.devicePixelRatio || 1
+  if (canvas.width !== width * ratio || canvas.height !== height * ratio) {
+    canvas.width = width * ratio
+    canvas.height = height * ratio
   }
+  const context = canvas.getContext('2d')
+  if (!context) return
+  context.setTransform(1, 0, 0, 1, 0, 0)
+  context.scale(ratio, ratio)
+  burstCtx = context
+}
 
-  const starCount = 28
-  const newStars: StarParticle[] = Array.from({ length: starCount }, (_, index) => {
-    const distance = 160 + Math.random() * 260
-    const angle = (index / starCount) * Math.PI * 2 + Math.random() * 0.35
+function stopBurstAnimation() {
+  if (!burstAnimationFrame) return
+  cancelAnimationFrame(burstAnimationFrame)
+  burstAnimationFrame = null
+}
+
+function disposeCanvas() {
+  stopBurstAnimation()
+  burstCtx = null
+  burstParticles = []
+}
+
+function createBurstParticles(): CanvasParticle[] {
+  const count = reduceMotion.value ? 10 : 18
+  return Array.from({ length: count }, (_, index) => {
+    const angle = (index / count) * Math.PI * 2 + (Math.random() * 0.4 - 0.2)
+    const distance = 140 + Math.random() * 180
     return {
-      id: `${props.pokemon.id}-star-${Date.now()}-${index}`,
-      x: Math.cos(angle) * distance,
-      y: Math.sin(angle) * distance,
-      delay: Math.random() * 0.18,
-      scale: 0.55 + Math.random() * 0.9,
+      angle,
+      distance,
+      duration: 0.9 + Math.random() * 0.6,
+      delay: Math.random() * 0.12,
       color: randomBurstColor(),
-      rotation: -25 + Math.random() * 50,
-      duration: 1.2 + Math.random() * 0.7,
-      blur: 3 + Math.random() * 10,
+      size: 4.5 + Math.random() * 3.5,
+      rotation: Math.random() * Math.PI * 2,
+    }
+  })
+}
+
+function drawStar(ctx: CanvasRenderingContext2D, outerRadius: number, innerRadius: number, points = 5) {
+  ctx.beginPath()
+  for (let i = 0; i < points * 2; i += 1) {
+    const radius = i % 2 === 0 ? outerRadius : innerRadius
+    const angle = (Math.PI * i) / points
+    ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius)
+  }
+  ctx.closePath()
+  ctx.fill()
+}
+
+function drawParticles(timestamp: number) {
+  if (!burstCtx || !burstCanvasRef.value || !burstParticles.length) return
+  if (!burstStartTime) {
+    burstStartTime = timestamp
+  }
+  const elapsed = (timestamp - burstStartTime) / 1000
+  const canvas = burstCanvasRef.value
+  burstCtx.clearRect(0, 0, canvas.width, canvas.height)
+
+  const container = burstContainerRef.value
+  const width = container?.clientWidth ?? 0
+  const height = container?.clientHeight ?? 0
+  const centerX = width / 2
+  const centerY = height / 2
+
+  let hasActiveParticle = false
+
+  burstParticles.forEach((particle) => {
+    const localTime = elapsed - particle.delay
+    if (localTime < 0) {
+      hasActiveParticle = true
+      return
+    }
+    const progress = Math.min(localTime / particle.duration, 1)
+    const eased = 1 - Math.pow(1 - progress, 3)
+    const x = centerX + Math.cos(particle.angle) * particle.distance * eased
+    const y = centerY + Math.sin(particle.angle) * particle.distance * eased
+    const alpha = Math.max(0, 0.9 - progress)
+    const size = particle.size * (1 - progress * 0.35)
+    const inner = size * 0.45
+
+    burstCtx!.save()
+    burstCtx!.translate(x, y)
+    burstCtx!.rotate(particle.rotation + progress * 1.2)
+    burstCtx!.fillStyle = particle.color
+    burstCtx!.globalAlpha = alpha
+    burstCtx!.shadowColor = particle.color
+    burstCtx!.shadowBlur = size * 2.4
+    drawStar(burstCtx!, size, inner, 5)
+    burstCtx!.restore()
+
+    if (progress < 1) {
+      hasActiveParticle = true
     }
   })
 
-  shinyStars.value = newStars
-  clearStarsTimeout = setTimeout(() => {
-    shinyStars.value = []
-    clearStarsTimeout = null
-  }, Math.max(...newStars.map((star) => star.duration + star.delay)) * 1000 + 250)
-}
-
-function starStyle(star: StarParticle) {
-  return {
-    '--x': `${star.x}px`,
-    '--y': `${star.y}px`,
-    '--delay': `${star.delay}s`,
-    '--scale': star.scale.toString(),
-    '--spin': `${star.rotation}deg`,
-    '--duration': `${star.duration}s`,
-    '--blur': `${star.blur}px`,
-    '--glow': star.color,
-    background: `radial-gradient(circle at 50% 50%, ${star.color}, transparent 70%)`,
+  if (hasActiveParticle) {
+    burstAnimationFrame = requestAnimationFrame(drawParticles)
+  } else {
+    burstAnimationFrame = null
+    burstCtx?.clearRect(0, 0, canvas.width, canvas.height)
   }
 }
 
+function triggerStarBurst() {
+  if (reduceMotion.value) return
+  syncCanvasSize()
+  if (!burstCanvasRef.value) return
+  if (!burstCtx) {
+    syncCanvasSize()
+  }
+  if (!burstCtx) return
+  stopBurstAnimation()
+  burstParticles = createBurstParticles()
+  burstStartTime = 0
+  burstCtx.clearRect(0, 0, burstCanvasRef.value.width, burstCanvasRef.value.height)
+  burstAnimationFrame = requestAnimationFrame(drawParticles)
+}
+
+onMounted(() => {
+  setupMotionPreference()
+  syncCanvasSize()
+  if (typeof window !== 'undefined' && burstContainerRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      syncCanvasSize()
+    })
+    resizeObserver.observe(burstContainerRef.value)
+  }
+})
+
 onBeforeUnmount(() => {
-  if (clearStarsTimeout) {
-    clearTimeout(clearStarsTimeout)
-    clearStarsTimeout = null
+  disposeCanvas()
+  resizeObserver?.disconnect()
+  resizeObserver = null
+  if (motionMedia && motionListener) {
+    motionMedia.removeEventListener('change', motionListener)
   }
 })
 </script>
@@ -108,15 +222,11 @@ onBeforeUnmount(() => {
       :style="{ backgroundColor: typeColor.glow }"
       v-motion="auraMotion"
     />
-    <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 mix-blend-screen">
-      <div class="relative w-[42rem] h-[42rem] sm:w-[52rem] sm:h-[52rem]">
-        <span
-          v-for="star in shinyStars"
-          :key="star.id"
-          class="burst-star"
-          :style="starStyle(star)"
-        />
-      </div>
+    <div
+      ref="burstContainerRef"
+      class="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0"
+    >
+      <canvas ref="burstCanvasRef" class="burst-canvas" />
     </div>
     <div
       :key="`${pokemon.id}-sprite-${spriteAnimationKey}`"
@@ -159,56 +269,10 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.burst-star {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 34px;
-  height: 34px;
-  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0) rotate(0deg);
-  animation: starBurst var(--duration, 1.4s) linear forwards;
-  animation-delay: var(--delay);
-  filter: drop-shadow(0 0 20px var(--glow, rgba(248, 250, 252, 0.9))) blur(var(--blur, 4px));
+.burst-canvas {
+  width: min(52rem, 85vw);
+  height: min(52rem, 85vw);
+  pointer-events: none;
   mix-blend-mode: screen;
-}
-
-@keyframes starBurst {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.15) rotate(0deg);
-    filter: blur(calc(var(--blur, 4px) * 1.35));
-  }
-  12% {
-    opacity: 0.25;
-    transform: translate(-50%, -50%) scale(0.55) rotate(calc(var(--spin, 0deg) / 6));
-    filter: blur(calc(var(--blur, 4px) * 0.95));
-  }
-  35% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(calc(var(--scale, 1) * 1.85)) rotate(calc(var(--spin, 0deg) / 1.8));
-    filter: blur(calc(var(--blur, 4px) * 0.4));
-  }
-  70% {
-    opacity: 0.55;
-    transform: translate(calc(-50% + var(--x) * 0.65), calc(-50% + var(--y) * 0.65))
-      scale(calc(var(--scale, 1) * 0.9))
-      rotate(calc(var(--spin, 0deg) * 1.1));
-    filter: blur(calc(var(--blur, 4px) * 0.7));
-  }
-  88% {
-    opacity: 0.15;
-    transform: translate(calc(-50% + var(--x) * 0.9), calc(-50% + var(--y) * 0.9))
-      scale(calc(var(--scale, 1) * 0.4))
-      rotate(calc(var(--spin, 0deg) * 1.3));
-    filter: blur(calc(var(--blur, 4px) * 1.1));
-  }
-  100% {
-    opacity: 0;
-    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.1)
-      rotate(calc(var(--spin, 0deg) * 1.4));
-    filter: blur(calc(var(--blur, 4px) * 1.5));
-  }
 }
 </style>

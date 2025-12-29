@@ -149,7 +149,7 @@ function playCry() {
 
 <template>
   <button
-    class="group relative flex h-full w-full flex-col overflow-hidden rounded-[32px] bg-white/10 p-8 text-left text-surface-900 transition-transform duration-500 hover:-translate-y-2 focus-visible:-translate-y-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+    class="card-veil group relative flex h-full w-full flex-col overflow-hidden rounded-[32px] border border-white/15 p-8 text-left text-white transition-transform duration-500 hover:-translate-y-2 focus-visible:-translate-y-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
     @click="handleClick"
   >
     
@@ -221,6 +221,34 @@ function playCry() {
 </template>
 
 <style scoped>
+.card-veil {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 25px 50px rgba(2, 6, 23, 0.45);
+}
+
+.card-veil::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(248, 250, 252, 0.35), transparent 55%);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.card-veil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
 .watermark {
   position: absolute;
   top: 0;
