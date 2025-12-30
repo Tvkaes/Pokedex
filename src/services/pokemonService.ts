@@ -1,43 +1,20 @@
 import { fetchPokemon, fetchPokemonItem, fetchPokemonSpecies } from '@/utils/api'
 import { formatPokemonId, formatPokemonName, extractDescription, extractGenus, extractNativeName, mapStats } from '@/utils/helpers'
 import type { PokemonDetails } from '@/types/pokemon-details.types'
-import type { PokemonAlternateForm, PokemonData, PokemonDisplayData, PokemonGridEntry } from '@/types/pokemon.types'
+import type {
+  PokemonAlternateForm,
+  PokemonData,
+  PokemonDisplayData,
+  PokemonGridEntry,
+  PokemonSpeciesData,
+} from '@/types/pokemon.types'
 import { POKEMON_GENERATIONS } from '@pokedex/data/generations'
 import { buildItemSpriteUrl, getMegaStoneSlug } from '@pokedex/data/mega-stones'
 
-function mapDisplayData(
-  data: PokemonData,
-  speciesData: Awaited<ReturnType<typeof fetchPokemonSpecies>>,
-  alternateForms: PokemonAlternateForm[] = []
-): PokemonDetails['display'] {
-  const display: PokemonDisplayData = {
-    id: data.id,
-    formattedId: formatPokemonId(data.id),
-    name: formatPokemonName(data.name),
-    nativeName: extractNativeName(speciesData),
-    description: extractDescription(speciesData),
-    genus: extractGenus(speciesData),
-    stats: mapStats(data),
-    types: data.types,
-    abilities: data.abilities,
-    height: data.height / 10,
-    weight: data.weight / 10,
-    sprite:
-      data.sprites?.other?.['official-artwork']?.front_default ??
-      data.sprites?.other?.home?.front_default ??
-      data.sprites?.front_default ??
-      '',
-    spriteShiny:
-      data.sprites?.other?.['official-artwork']?.front_shiny ??
-      data.sprites?.other?.home?.front_shiny ??
-      data.sprites?.front_shiny ??
-      null,
-    cryUrl: data.cries?.latest ?? data.cries?.legacy ?? undefined,
-    hasMegaEvolution: alternateForms.length > 0,
-    alternateForms,
-  }
-
-  return display
+type PokemonBundle = {
+  data: PokemonData
+  species: PokemonSpeciesData
+  alternateForms: PokemonAlternateForm[]
 }
 
 const SPECIAL_FORM_KEYWORDS = ['mega', 'primal']
@@ -75,9 +52,7 @@ async function resolveMegaStoneForForm(formName: string): Promise<MegaStoneAsset
   }
 }
 
-async function extractAlternateForms(
-  speciesData: Awaited<ReturnType<typeof fetchPokemonSpecies>>
-): Promise<PokemonAlternateForm[]> {
+async function extractAlternateForms(speciesData: PokemonSpeciesData): Promise<PokemonAlternateForm[]> {
   const varieties = speciesData?.varieties ?? []
   const specialVarieties = varieties.filter((variety) => !variety.is_default && isSpecialForm(variety.pokemon.name))
   if (!specialVarieties.length) {
@@ -121,18 +96,66 @@ async function extractAlternateForms(
   return forms.filter((form): form is PokemonAlternateForm => form !== null)
 }
 
-/**
- * Returns the lightweight data required for the grid cards.
- */
-export async function getPokemonGridEntry(identifier: string | number): Promise<PokemonGridEntry> {
+async function fetchPokemonBundle(identifier: string | number): Promise<PokemonBundle> {
   const [data, species] = await Promise.all([fetchPokemon(identifier), fetchPokemonSpecies(identifier)])
   const alternateForms = await extractAlternateForms(species)
-  return mapGridEntry(data, species, alternateForms)
+  return { data, species, alternateForms }
 }
 
-/**
- * Retrieves every Pokémon belonging to a generation range for grid rendering.
- */
+function mapDisplayData(bundle: PokemonBundle): PokemonDisplayData {
+  const { data, species, alternateForms } = bundle
+  return {
+    id: data.id,
+    formattedId: formatPokemonId(data.id),
+    name: formatPokemonName(data.name),
+    nativeName: extractNativeName(species),
+    description: extractDescription(species),
+    genus: extractGenus(species),
+    stats: mapStats(data),
+    types: data.types,
+    abilities: data.abilities,
+    height: data.height / 10,
+    weight: data.weight / 10,
+    sprite:
+      data.sprites?.other?.['official-artwork']?.front_default ??
+      data.sprites?.other?.home?.front_default ??
+      data.sprites?.front_default ??
+      '',
+    spriteShiny:
+      data.sprites?.other?.['official-artwork']?.front_shiny ??
+      data.sprites?.other?.home?.front_shiny ??
+      data.sprites?.front_shiny ??
+      null,
+    cryUrl: data.cries?.latest ?? data.cries?.legacy ?? undefined,
+    hasMegaEvolution: alternateForms.length > 0,
+    alternateForms,
+  }
+}
+
+function mapGridEntry(bundle: PokemonBundle): PokemonGridEntry {
+  const { data, species, alternateForms } = bundle
+  return {
+    id: data.id,
+    formattedId: formatPokemonId(data.id),
+    name: formatPokemonName(data.name),
+    nativeName: extractNativeName(species),
+    sprite:
+      data.sprites?.other?.['official-artwork']?.front_default ??
+      data.sprites?.other?.home?.front_default ??
+      data.sprites?.front_default ??
+      '',
+    primaryType: data.types?.[0]?.type?.name ?? 'normal',
+    hasMegaEvolution: alternateForms.length > 0,
+    alternateForms: alternateForms.length ? alternateForms : undefined,
+    cryUrl: data.cries?.latest ?? data.cries?.legacy ?? undefined,
+  }
+}
+
+export async function getPokemonGridEntry(identifier: string | number): Promise<PokemonGridEntry> {
+  const bundle = await fetchPokemonBundle(identifier)
+  return mapGridEntry(bundle)
+}
+
 export async function getGenerationGridEntries(generationId: string): Promise<PokemonGridEntry[]> {
   const generation = POKEMON_GENERATIONS.find((gen) => gen.id === generationId)
   if (!generation) {
@@ -163,40 +186,14 @@ export async function getGenerationGridEntries(generationId: string): Promise<Po
   return results.filter((entry): entry is PokemonGridEntry => Boolean(entry))
 }
 
-function mapGridEntry(
-  data: PokemonData,
-  speciesData: Awaited<ReturnType<typeof fetchPokemonSpecies>>,
-  alternateForms: PokemonAlternateForm[]
-): PokemonGridEntry {
-  return {
-    id: data.id,
-    formattedId: formatPokemonId(data.id),
-    name: formatPokemonName(data.name),
-    nativeName: extractNativeName(speciesData),
-    sprite:
-      data.sprites?.other?.['official-artwork']?.front_default ??
-      data.sprites?.other?.home?.front_default ??
-      data.sprites?.front_default ??
-      '',
-    primaryType: data.types?.[0]?.type?.name ?? 'normal',
-    hasMegaEvolution: alternateForms.length > 0,
-    alternateForms: alternateForms.length ? alternateForms : undefined,
-    cryUrl: data.cries?.latest ?? data.cries?.legacy ?? undefined,
-  }
-}
-
-/**
- * Fetches every data source needed to display a Pokémon and returns raw+formatted information.
- */
 export async function getPokemonDetails(identifier: string | number): Promise<PokemonDetails> {
-  const [data, species] = await Promise.all([fetchPokemon(identifier), fetchPokemonSpecies(identifier)])
-  const primaryType = data.types?.[0]?.type?.name ?? 'normal'
-  const alternateForms = await extractAlternateForms(species)
+  const bundle = await fetchPokemonBundle(identifier)
+  const primaryType = bundle.data.types?.[0]?.type?.name ?? 'normal'
 
   return {
     primaryType,
-    raw: data,
-    species,
-    display: mapDisplayData(data, species, alternateForms),
+    raw: bundle.data,
+    species: bundle.species,
+    display: mapDisplayData(bundle),
   }
 }

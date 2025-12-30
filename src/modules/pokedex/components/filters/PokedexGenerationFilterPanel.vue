@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { GenerationConfig } from '@/modules/pokedex/data/generations';
-
-
+import { GenerationConfig } from '@/modules/pokedex/data/generations'
+import FrostedCard from '@/components/base/FrostedCard.vue'
 
 const props = defineProps<{
   generations: GenerationConfig[]
@@ -21,7 +20,7 @@ function handleSelect(id: string) {
 
 <template>
   <div class="mt-20 px-6 sm:px-10">
-    <div class="mx-auto max-w-5xl rounded-[40px] border border-white/20 bg-white/10 px-6 py-8 text-center backdrop-blur">
+    <FrostedCard as="div" class="mx-auto max-w-5xl rounded-[40px] border border-white/20 px-6 py-8 text-center">
       <p class="text-xs uppercase tracking-[0.5em] text-white/60">Generations</p>
       <h2 class="mt-2 text-3xl font-semibold tracking-tight">Explore the Eras of the Pokédex</h2>
       <p class="mt-2 text-sm text-white/70">
@@ -44,6 +43,7 @@ function handleSelect(id: string) {
           </button>
         </template>
       </div>
-    </div>
+    </FrostedCard>
   </div>
 </template>
+
