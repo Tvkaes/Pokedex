@@ -31,8 +31,9 @@ function handleRandom() {
   store.loadPokemon(randomId)
 }
 
-function handleSelect(id: number) {
-  store.loadPokemon(id)
+async function handleSelect(id: number) {
+  await store.loadPokemon(id)
+  store.setViewMode('hero')
 }
 
 function handleSwitch(mode: 'hero' | 'grid') {
