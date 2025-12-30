@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { DEFAULT_POKEMON } from '@/utils/constants'
 import { DEFAULT_GENERATION_ID } from '@pokedex/data/generations'
 import type { PokemonDisplayData, PokemonGridEntry } from '@/types/pokemon.types'
@@ -12,7 +12,13 @@ export const usePokemonStore = defineStore('pokemon', () => {
   const primaryType = ref<string>('electric')
   const viewMode = ref<'hero' | 'grid'>('hero')
   const activeGeneration = ref<string>(DEFAULT_GENERATION_ID)
-  const generationEntries = ref<Record<string, PokemonGridEntry[]>>({})
+  const generationEntries = ref<Record<
+    string,
+    {
+      entries: PokemonGridEntry[]
+      timestamp: number
+    }
+  >>({})
   const isGenerationLoading = ref(false)
 
   /**
@@ -54,15 +60,25 @@ export const usePokemonStore = defineStore('pokemon', () => {
   /**
    * Fetches and caches lightweight entries for the selected generation to power the grid layout.
    */
-  async function loadGenerationEntries(id: string) {
-    if (generationEntries.value[id]) return
+  const CACHE_TTL = 1000 * 60 * 5
+
+  async function loadGenerationEntries(id: string, forceRefresh = false) {
+    const cached = generationEntries.value[id]
+    const isFresh = cached ? Date.now() - cached.timestamp < CACHE_TTL : false
+
+    if (!forceRefresh && cached && isFresh) {
+      return
+    }
     try {
       isGenerationLoading.value = true
       error.value = null
       const entries = await getGenerationGridEntries(id)
       generationEntries.value = {
         ...generationEntries.value,
-        [id]: entries,
+        [id]: {
+          entries,
+          timestamp: Date.now(),
+        },
       }
     } catch (err) {
       console.error(err)
@@ -79,7 +95,11 @@ export const usePokemonStore = defineStore('pokemon', () => {
     primaryType,
     viewMode,
     activeGeneration,
-    generationEntries,
+    generationEntries: computed(() =>
+      Object.fromEntries(
+        Object.entries(generationEntries.value).map(([key, value]) => [key, value.entries])
+      )
+    ),
     isGenerationLoading,
     loadPokemon,
     setViewMode,

@@ -8,6 +8,8 @@ import PokedexGenerationFilterPanel from '@pokedex/components/filters/PokedexGen
 import { getTypeColor } from '@/utils/typeColors'
 import { POKEMON_GENERATIONS, DEFAULT_GENERATION_ID } from '@pokedex/data/generations'
 import StripeAuraBackground from '@/components/backgrounds/StripeAuraBackground.vue'
+import ScrollToTopButton from '@/components/ui/ScrollToTopButton.vue'
+import { useScrollTopButton } from '@/composables/useScrollTopButton'
 
 const store = usePokemonStore()
 
@@ -16,6 +18,7 @@ const heroColor = computed(() => getTypeColor(accentType.value))
 const secondaryType = computed(() => store.pokemon?.types?.[1]?.type?.name ?? null)
 const secondaryHeroColor = computed(() => getTypeColor(secondaryType.value ?? accentType.value))
 const isHeroView = computed(() => store.viewMode === 'hero')
+const isGridView = computed(() => store.viewMode === 'grid')
 const generationEntries = computed(() => store.generationEntries[store.activeGeneration] ?? [])
 const heroGradientStyle = computed(() => {
   const primaryHex = heroColor.value.color || '#B3272C'
@@ -25,6 +28,8 @@ const heroGradientStyle = computed(() => {
     backgroundColor: primaryHex,
   }
 })
+
+const { showScrollTop, scrollToTop } = useScrollTopButton(isGridView)
 
 function handleRandom() {
   const randomId = Math.floor(Math.random() * 898) + 1
@@ -104,6 +109,8 @@ onMounted(() => {
         />
       </div>
     </Transition>
+
+    <ScrollToTopButton v-if="isGridView" :visible="showScrollTop" @click="scrollToTop" />
   </section>
 </template>
 
@@ -118,5 +125,6 @@ onMounted(() => {
   opacity: 0;
   transform: scale(0.98);
 }
+
 </style>
 
