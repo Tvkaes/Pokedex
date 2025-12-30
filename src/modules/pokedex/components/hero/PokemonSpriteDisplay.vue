@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { PokemonDisplayData } from '@/types/pokemon.types'
 import type { TypeColorConfig } from '@/utils/typeColors'
 
@@ -30,6 +30,7 @@ const emit = defineEmits<{
 
 const burstContainerRef = ref<HTMLDivElement | null>(null)
 const burstCanvasRef = ref<HTMLCanvasElement | null>(null)
+const spriteSectionRef = ref<HTMLDivElement | null>(null)
 
 let burstCtx: CanvasRenderingContext2D | null = null
 let burstParticles: CanvasParticle[] = []
@@ -38,8 +39,13 @@ let burstStartTime = 0
 let resizeObserver: ResizeObserver | null = null
 let motionMedia: MediaQueryList | null = null
 let motionListener: ((event: MediaQueryListEvent) => void) | null = null
+let visibilityListener: (() => void) | null = null
+let intersectionObserver: IntersectionObserver | null = null
 
 const reduceMotion = ref(false)
+const documentVisible = ref(true)
+const sectionVisible = ref(true)
+const canAnimateBurst = computed(() => !reduceMotion.value && documentVisible.value && sectionVisible.value)
 const burstColors = ['#fde047', '#fee2e2', '#f9a8d4', '#bae6fd', '#c4b5fd'] as const
 
 watch(
@@ -59,6 +65,39 @@ function setupMotionPreference() {
     reduceMotion.value = event.matches
   }
   motionMedia.addEventListener('change', motionListener)
+}
+
+function setupVisibilityListener() {
+  if (typeof document === 'undefined') return
+  visibilityListener = () => {
+    documentVisible.value = document.visibilityState !== 'hidden'
+    if (!documentVisible.value) {
+      stopBurstAnimation()
+    } else if (canAnimateBurst.value && burstParticles.length) {
+      burstAnimationFrame = requestAnimationFrame(drawParticles)
+    }
+  }
+  document.addEventListener('visibilitychange', visibilityListener)
+  documentVisible.value = document.visibilityState !== 'hidden'
+}
+
+function setupIntersectionObserver() {
+  if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return
+  intersectionObserver = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0]
+      sectionVisible.value = entry?.isIntersecting ?? true
+      if (!sectionVisible.value) {
+        stopBurstAnimation()
+      } else if (canAnimateBurst.value && burstParticles.length) {
+        burstAnimationFrame = requestAnimationFrame(drawParticles)
+      }
+    },
+    { threshold: 0.2 }
+  )
+  if (spriteSectionRef.value) {
+    intersectionObserver.observe(spriteSectionRef.value)
+  }
 }
 
 function randomBurstColor() {
@@ -179,7 +218,7 @@ function drawParticles(timestamp: number) {
 }
 
 function triggerStarBurst() {
-  if (reduceMotion.value) return
+  if (!canAnimateBurst.value) return
   syncCanvasSize()
   if (!burstCanvasRef.value) return
   if (!burstCtx) {
@@ -195,6 +234,7 @@ function triggerStarBurst() {
 
 onMounted(() => {
   setupMotionPreference()
+  setupVisibilityListener()
   syncCanvasSize()
   if (typeof window !== 'undefined' && burstContainerRef.value) {
     resizeObserver = new ResizeObserver(() => {
@@ -202,6 +242,7 @@ onMounted(() => {
     })
     resizeObserver.observe(burstContainerRef.value)
   }
+  setupIntersectionObserver()
 })
 
 onBeforeUnmount(() => {
@@ -211,11 +252,17 @@ onBeforeUnmount(() => {
   if (motionMedia && motionListener) {
     motionMedia.removeEventListener('change', motionListener)
   }
+  if (visibilityListener) {
+    document.removeEventListener('visibilitychange', visibilityListener)
+    visibilityListener = null
+  }
+  intersectionObserver?.disconnect()
+  intersectionObserver = null
 })
 </script>
 
 <template>
-  <div class="relative flex flex-col items-center justify-center">
+  <div ref="spriteSectionRef" class="relative flex flex-col items-center justify-center">
     <div
       :key="`${pokemon.id}-aura-${spriteAnimationKey}`"
       class="absolute w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 blur-[100px] opacity-50 rounded-full"

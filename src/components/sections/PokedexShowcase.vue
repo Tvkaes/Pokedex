@@ -31,9 +31,14 @@ const heroGradientStyle = computed(() => {
 
 const { showScrollTop, scrollToTop } = useScrollTopButton(isGridView)
 
-function handleRandom() {
+function ensureInitialPokemon() {
+  if (store.pokemon) return Promise.resolve()
   const randomId = Math.floor(Math.random() * 898) + 1
-  store.loadPokemon(randomId)
+  return store.loadPokemon(randomId)
+}
+
+async function loadInitialData() {
+  await Promise.all([ensureInitialPokemon(), store.loadGenerationEntries(DEFAULT_GENERATION_ID)])
 }
 
 async function handleSelect(id: number) {
@@ -61,8 +66,7 @@ watch(
 )
 
 onMounted(() => {
-  handleRandom()
-  store.loadGenerationEntries(DEFAULT_GENERATION_ID)
+  void loadInitialData()
 })
 </script>
 
