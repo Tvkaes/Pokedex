@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { PokemonGridEntry } from '@/types/pokemon.types'
 import PokemonTypeBadge from '@pokedex/components/shared/PokemonTypeBadge.vue'
 import PokemonGridMegaToggleButton from './PokemonGridMegaToggleButton.vue'
+import { useAlternateForms } from '@/composables/useAlternateForms'
 
 const props = defineProps<{
   entry: PokemonGridEntry
@@ -35,32 +36,27 @@ const spriteMotion = computed(() => ({
   },
 }))
 
-const isMegaActive = ref(false)
-const currentFormIndex = ref(0)
 const alternateForms = computed(() => props.entry.alternateForms ?? [])
-const hasMegaForm = computed(() => props.entry.hasMegaEvolution && alternateForms.value.length > 0)
+const { activeForm, activeFormIndex, hasAlternateForms, toggleForm, resetForms } = useAlternateForms({
+  forms: alternateForms,
+})
+const hasMegaForm = computed(() => props.entry.hasMegaEvolution && hasAlternateForms.value)
+const isMegaActive = computed(() => activeFormIndex.value !== null)
 const formStones = computed(() =>
-  alternateForms.value
-    .map((form, index) => ({ form, index }))
-    .filter(({ form }) => Boolean(form.stone?.sprite))
+  alternateForms.value.map((form, index) => ({ form, index })).filter(({ form }) => Boolean(form.stone?.sprite))
 )
 const hasMultipleStones = computed(() => formStones.value.length > 1)
 const pulseMode = ref<'mega' | 'base' | null>(null)
 let pulseTimeout: ReturnType<typeof setTimeout> | null = null
 const cryAudio = ref<HTMLAudioElement | null>(null)
 
-const activeForm = computed(() => {
-  if (!isMegaActive.value || !hasMegaForm.value) return null
-  return alternateForms.value[currentFormIndex.value] ?? null
-})
-
 const displayName = computed(() => activeForm.value?.name ?? props.entry.name)
 const displaySprite = computed(() => activeForm.value?.sprite ?? props.entry.sprite)
 const displayType = computed(() => activeForm.value?.primaryType ?? props.entry.primaryType)
 const displayFormattedId = computed(() => activeForm.value?.formattedId ?? props.entry.formattedId)
 const activeStone = computed(() => {
-  if (isMegaActive.value && hasMegaForm.value) {
-    return activeForm.value?.stone ?? formStones.value[0]?.form.stone
+  if (activeForm.value) {
+    return activeForm.value.stone ?? formStones.value[0]?.form.stone
   }
   return formStones.value[0]?.form.stone
 })
@@ -73,30 +69,21 @@ function handleClick() {
 
 function handleMegaToggle(targetIndex?: number) {
   if (!hasMegaForm.value) return
-  const nextIndex =
-    typeof targetIndex === 'number'
-      ? targetIndex
-      : (currentFormIndex.value + 1) % Math.max(alternateForms.value.length, 1)
-
-  if (!isMegaActive.value || currentFormIndex.value !== nextIndex) {
-    isMegaActive.value = true
-    currentFormIndex.value = nextIndex
-    triggerPulse('mega')
-    playCry()
-    return
+  if (typeof targetIndex === 'number') {
+    toggleForm(targetIndex)
+  } else {
+    const nextIndex = activeFormIndex.value === null ? 0 : (activeFormIndex.value + 1) % alternateForms.value.length
+    toggleForm(nextIndex)
   }
 
-  isMegaActive.value = false
-  currentFormIndex.value = 0
-  triggerPulse('base')
+  triggerPulse(activeFormIndex.value === null ? 'base' : 'mega')
   playCry()
 }
 
 watch(
   () => props.entry.id,
   () => {
-    isMegaActive.value = false
-    currentFormIndex.value = 0
+    resetForms()
     stopPulse()
   }
 )
@@ -127,7 +114,7 @@ onBeforeUnmount(() => {
 })
 
 function resolveCryUrl() {
-  if (isMegaActive.value) {
+  if (activeForm.value) {
     return activeForm.value?.cryUrl || props.entry.cryUrl
   }
   return props.entry.cryUrl
@@ -173,7 +160,7 @@ function playCry() {
             v-for="{ form, index } in formStones"
             :key="`${entry.id}-${index}`"
             :is-visible="Boolean(form.stone?.sprite)"
-            :is-mega-active="isMegaActive && currentFormIndex === index"
+            :is-mega-active="isMegaActive && activeFormIndex === index"
             :stone-sprite="form.stone?.sprite ?? undefined"
             :display-name="form.name"
             @toggle="() => handleMegaToggle(index)"

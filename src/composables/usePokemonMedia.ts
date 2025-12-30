@@ -1,5 +1,6 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, type ComputedRef } from 'vue'
 import type { PokemonDisplayData } from '@/types/pokemon.types'
+import { useAlternateForms } from '@/composables/useAlternateForms'
 
 /**
  * Handles sprite display logic, shiny toggles, and cry playback for the active Pokémon.
@@ -11,15 +12,16 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
   const hasUserInteracted = ref(false)
   const spriteAnimationKey = ref(0)
   const shinySoundUrl = '/sounds/shiny.wav'
-  const activeMegaFormIndex = ref<number | null>(null)
 
   const isFlyingType = computed(() => pokemon.value.types?.some((type) => type.type.name === 'flying') ?? false)
   const megaForms = computed(() => pokemon.value.alternateForms ?? [])
-  const hasMegaEvolution = computed(() => megaForms.value.length > 0)
-  const activeMegaForm = computed(() => {
-    if (activeMegaFormIndex.value === null) return null
-    return megaForms.value[activeMegaFormIndex.value] ?? null
-  })
+  const {
+    activeForm: activeMegaForm,
+    activeFormIndex: activeMegaFormIndex,
+    hasAlternateForms: hasMegaEvolution,
+    selectForm: selectMegaFormIndex,
+    resetForms: resetMegaForms,
+  } = useAlternateForms({ forms: megaForms })
 
   const spriteMotion = computed(() => ({
     initial: {
@@ -91,7 +93,7 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
   }
 
   function resetMegaForm() {
-    activeMegaFormIndex.value = null
+    resetMegaForms()
   }
 
   function selectMegaForm(index: number | null) {
@@ -101,10 +103,10 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
       return
     }
 
-    if (!megaForms.value[index]) return
+    if (!hasMegaEvolution.value) return
 
     resetShiny()
-    activeMegaFormIndex.value = index
+    selectMegaFormIndex(index)
     replaySpriteAnimation()
     void playCry(megaForms.value[index]?.cryUrl ?? pokemon.value.cryUrl)
   }
