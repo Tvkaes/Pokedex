@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
-import { usePokemonStore } from '@/stores/pokemon'
+import { usePokemonDataStore } from '@/stores/pokemonData'
+import { usePokemonViewStore } from '@/stores/pokemonView'
 import PokemonHeroView from '@pokedex/components/hero/PokemonHeroView.vue'
 import PokemonGridView from '@pokedex/components/grid/PokemonGridView.vue'
 import PokedexViewToggle from '@pokedex/components/controls/PokedexViewToggle.vue'
@@ -11,15 +12,16 @@ import StripeAuraBackground from '@/components/backgrounds/StripeAuraBackground.
 import ScrollToTopButton from '@/components/ui/ScrollToTopButton.vue'
 import { useScrollTopButton } from '@/composables/useScrollTopButton'
 
-const store = usePokemonStore()
+const dataStore = usePokemonDataStore()
+const viewStore = usePokemonViewStore()
 
-const accentType = computed(() => store.primaryType)
+const accentType = computed(() => dataStore.primaryType)
 const heroColor = computed(() => getTypeColor(accentType.value))
-const secondaryType = computed(() => store.pokemon?.types?.[1]?.type?.name ?? null)
+const secondaryType = computed(() => dataStore.pokemon?.types?.[1]?.type?.name ?? null)
 const secondaryHeroColor = computed(() => getTypeColor(secondaryType.value ?? accentType.value))
-const isHeroView = computed(() => store.viewMode === 'hero')
-const isGridView = computed(() => store.viewMode === 'grid')
-const generationEntries = computed(() => store.generationEntries[store.activeGeneration] ?? [])
+const isHeroView = computed(() => viewStore.viewMode === 'hero')
+const isGridView = computed(() => viewStore.viewMode === 'grid')
+const generationEntries = computed(() => dataStore.getGenerationEntries(viewStore.activeGeneration))
 const heroGradientStyle = computed(() => {
   const primaryHex = heroColor.value.color || '#B3272C'
   const secondaryHex = secondaryHeroColor.value.color
@@ -32,34 +34,34 @@ const heroGradientStyle = computed(() => {
 const { showScrollTop, scrollToTop } = useScrollTopButton(isGridView)
 
 function ensureInitialPokemon() {
-  if (store.pokemon) return Promise.resolve()
+  if (dataStore.pokemon) return Promise.resolve()
   const randomId = Math.floor(Math.random() * 898) + 1
-  return store.loadPokemon(randomId)
+  return dataStore.loadPokemon(randomId)
 }
 
 async function loadInitialData() {
-  await Promise.all([ensureInitialPokemon(), store.loadGenerationEntries(DEFAULT_GENERATION_ID)])
+  await Promise.all([ensureInitialPokemon(), dataStore.loadGenerationEntries(DEFAULT_GENERATION_ID)])
 }
 
 async function handleSelect(id: number) {
-  await store.loadPokemon(id)
-  store.setViewMode('hero')
+  await dataStore.loadPokemon(id)
+  viewStore.setViewMode('hero')
 }
 
 function handleSwitch(mode: 'hero' | 'grid') {
-  store.setViewMode(mode)
+  viewStore.setViewMode(mode)
 }
 
 function handleGenerationSelect(id: string) {
-  store.setActiveGeneration(id)
-  store.loadGenerationEntries(id)
+  viewStore.setActiveGeneration(id)
+  dataStore.loadGenerationEntries(id)
 }
 
 watch(
-  () => store.viewMode,
+  () => viewStore.viewMode,
   (mode) => {
     if (mode === 'grid') {
-      store.loadGenerationEntries(store.activeGeneration)
+      dataStore.loadGenerationEntries(viewStore.activeGeneration)
     }
   },
   { immediate: false }
@@ -78,20 +80,20 @@ onMounted(() => {
     <StripeAuraBackground :primary-color="heroColor.color" :secondary-color="secondaryHeroColor.color" />
 
     <div class="absolute left-0 right-0 top-0 z-30 flex justify-end px-6 py-6">
-      <PokedexViewToggle :active="store.viewMode" @switch="handleSwitch" />
+      <PokedexViewToggle :active="viewStore.viewMode" @switch="handleSwitch" />
     </div>
 
     <Transition name="view-fade" mode="out-in">
       <template v-if="isHeroView">
-        <template v-if="store.pokemon">
+        <template v-if="dataStore.pokemon">
           <PokemonHeroView
-            :pokemon="store.pokemon"
+            :pokemon="dataStore.pokemon"
             :primary-type="accentType"
             class="relative z-20"
             @select="handleSelect"
           />
         </template>
-        <div v-else-if="store.isLoading" key="hero-loading" class="min-h-screen flex items-center justify-center">
+        <div v-else-if="dataStore.isLoading" key="hero-loading" class="min-h-screen flex items-center justify-center">
           <div class="text-center text-white/80 uppercase tracking-[0.4em] space-y-4">
             <div class="w-16 h-16 mx-auto border-4 border-white/20 border-t-white rounded-full animate-spin" />
             <p>Loading entry...</p>
@@ -102,13 +104,13 @@ onMounted(() => {
       <div v-else key="grid-view" class="relative z-20 min-h-screen pt-6">
         <PokedexGenerationFilterPanel
           :generations="POKEMON_GENERATIONS"
-          :active-id="store.activeGeneration"
-          :loading="store.isGenerationLoading"
+          :active-id="viewStore.activeGeneration"
+          :loading="dataStore.isGenerationLoading"
           @select="handleGenerationSelect"
         />
         <PokemonGridView
           :entries="generationEntries"
-          :is-loading="store.isGenerationLoading"
+          :is-loading="dataStore.isGenerationLoading"
           @select="handleSelect"
         />
       </div>
