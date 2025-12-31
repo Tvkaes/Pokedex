@@ -1,40 +1,48 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 const props = defineProps<{
   isVisible: boolean
-  isMegaActive: boolean
-  stoneSprite?: string | null
+  isActive: boolean
   displayName: string
-  isPokeballIcon?: boolean
+  iconSprite?: string
 }>()
 
 const emit = defineEmits<{
   toggle: []
 }>()
 
+const iconSrc = computed(() => props.iconSprite ?? '/dynamax.svg')
+
 function handleClick() {
-  if (!props.isVisible || !props.stoneSprite) return
+  if (!props.isVisible) return
   emit('toggle')
 }
 </script>
 
 <template>
   <button
-    v-if="isVisible && stoneSprite"
-    class="mega-toggle"
+    v-if="isVisible"
+    class="dynamax-toggle"
+    :class="{ 'dynamax-toggle--active': isActive }"
     type="button"
     @click.stop="handleClick"
   >
     <span class="sr-only">
-      {{ isMegaActive ? 'Return to base form' : 'Trigger mega evolution' }}
+      {{
+        isActive
+          ? `Volver a la forma base desde ${displayName}`
+          : `Activar forma Dynamax ${displayName}`
+      }}
     </span>
-    <span class="mega-toggle__image" aria-hidden="true">
-      <img :src="stoneSprite" :alt="`${displayName} mega stone`" loading="lazy" />
+    <span class="dynamax-toggle__image" aria-hidden="true">
+      <img :src="iconSrc" alt="Icono Dynamax" loading="lazy" />
     </span>
   </button>
 </template>
 
 <style scoped>
-.mega-toggle {
+.dynamax-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -46,13 +54,13 @@ function handleClick() {
   transition: background 0.2s ease;
 }
 
-.mega-toggle:hover,
-.mega-toggle:focus-visible {
-  background: rgba(255, 255, 255, 0.6);
+.dynamax-toggle:hover,
+.dynamax-toggle:focus-visible {
+  background: rgba(255, 255, 255, 0.55);
   outline: none;
 }
 
-.mega-toggle__image {
+.dynamax-toggle__image {
   width: 26px;
   height: 26px;
   border-radius: 999px;
@@ -61,11 +69,11 @@ function handleClick() {
   justify-content: center;
 }
 
-.mega-toggle__image img {
+.dynamax-toggle__image img {
   width: 24px;
   height: 24px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 10px rgba(15, 23, 42, 0.35));
+  filter: drop-shadow(0 4px 10px rgba(236, 72, 153, 0.45));
 }
 
 .sr-only {
@@ -76,6 +84,7 @@ function handleClick() {
   margin: -1px;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
   border: 0;
 }
 </style>

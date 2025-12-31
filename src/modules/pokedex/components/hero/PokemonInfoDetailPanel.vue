@@ -7,11 +7,16 @@ import PokemonStatsPanel from './PokemonStatsPanel.vue'
 import PokemonAbilityCard from './PokemonAbilityCard.vue'
 import PokemonFormsList from './PokemonFormsList.vue'
 
+type FormEntry = {
+  form: PokemonAlternateForm
+  index: number
+  secondaryType: string | null
+}
+
 const props = defineProps<{
   pokemon: PokemonDisplayData
   section: PokemonInfoSectionId
-  megaForms: PokemonAlternateForm[]
-  hasMegaEvolution: boolean
+  regionalFormEntries: FormEntry[]
   activeMegaFormIndex: number | null
 }>()
 
@@ -20,14 +25,8 @@ const emit = defineEmits<{
 }>()
 
 const isBaseActive = computed(() => props.activeMegaFormIndex === null)
-const hasForms = computed(() => props.hasMegaEvolution && props.megaForms.length > 0)
-const formEntries = computed(() =>
-  props.megaForms.map((form, index) => ({
-    form,
-    index,
-    secondaryType: form.types?.[1]?.type?.name ?? null,
-  }))
-)
+const formEntries = computed(() => props.regionalFormEntries)
+const hasForms = computed(() => formEntries.value.length > 0)
 const visibleFormEntries = computed(() => {
   if (!hasForms.value) return []
   if (isBaseActive.value) return formEntries.value

@@ -28,6 +28,8 @@ const {
   hasShiny,
   hasMegaEvolution,
   megaForms,
+  specialFormEntries,
+  regionalFormEntries,
   activeMegaFormIndex,
   activeMegaForm,
   showShiny,
@@ -108,6 +110,8 @@ function handleSelect(id: number) {
           :imperial-weight="imperialWeight"
           :has-mega-evolution="hasMegaEvolution"
           :mega-forms="megaForms"
+          :special-form-entries="specialFormEntries"
+          :regional-form-entries="regionalFormEntries"
           :active-mega-form-index="activeMegaFormIndex"
           @select-mega-form="selectMegaForm"
         />

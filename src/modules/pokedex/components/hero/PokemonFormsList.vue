@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import type { PokemonAlternateForm } from '@/types/pokemon.types'
-
-interface FormEntry {
-  form: PokemonAlternateForm
-  index: number
-  secondaryType: string | null
-}
+import PokemonFormVariantCard from './PokemonFormVariantCard.vue'
+import type { PokemonFormEntry } from '@/types/pokemon.types'
 
 const props = defineProps<{
   hasForms: boolean
   isBaseActive: boolean
-  visibleFormEntries: FormEntry[]
+  visibleFormEntries: PokemonFormEntry[]
 }>()
 
 const emit = defineEmits<{

@@ -213,7 +213,7 @@ export interface PokemonAlternateForm {
   formattedId: string
   sprite: string
   primaryType: string
-  variantKind?: 'regional' | 'special' | 'mega' | 'primal'
+  variantKind?: 'regional' | 'special' | 'mega' | 'primal' | 'dynamax'
   region?: string
   types?: PokemonType[]
   abilities?: PokemonAbility[]
@@ -239,6 +239,12 @@ export interface PokemonGridEntry {
   hasMegaEvolution: boolean
   alternateForms?: PokemonAlternateForm[]
   cryUrl?: string
+}
+
+export interface PokemonFormEntry {
+  form: PokemonAlternateForm
+  index: number
+  secondaryType: string | null
 }
 
 export interface PokemonItemData {

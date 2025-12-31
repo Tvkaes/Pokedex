@@ -95,6 +95,10 @@ function classifyVariant(name: string): VariantClassification | null {
     return { kind: 'primal' }
   }
 
+  if (normalized.includes('gigantamax') || normalized.includes('gmax') || normalized.includes('dynamax') || normalized.includes('dmax')) {
+    return { kind: 'dynamax' }
+  }
+
   const regionalMatch = REGIONAL_VARIANTS.find(({ keyword }) => normalized.includes(keyword))
   if (regionalMatch) {
     return {

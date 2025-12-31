@@ -1,5 +1,5 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, type ComputedRef } from 'vue'
-import type { PokemonDisplayData } from '@/types/pokemon.types'
+import type { PokemonDisplayData, PokemonFormEntry } from '@/types/pokemon.types'
 import { useAlternateForms } from '@/composables/useAlternateForms'
 
 /**
@@ -28,6 +28,19 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
 
   const isFlyingType = computed(() => pokemon.value.types?.some((type) => type.type.name === 'flying') ?? false)
   const megaForms = computed(() => pokemon.value.alternateForms ?? [])
+  const formEntries = computed<PokemonFormEntry[]>(() =>
+    megaForms.value.map((form, index) => ({
+      form,
+      index,
+      secondaryType: form.types?.[1]?.type?.name ?? null,
+    }))
+  )
+  const specialFormEntries = computed(() =>
+    formEntries.value.filter(({ form }) => form.variantKind === 'mega' || form.variantKind === 'primal' || form.variantKind === 'dynamax')
+  )
+  const regionalFormEntries = computed(() =>
+    formEntries.value.filter(({ form }) => form.variantKind !== 'mega' && form.variantKind !== 'primal' && form.variantKind !== 'dynamax')
+  )
   const {
     activeForm: activeMegaForm,
     activeFormIndex: activeMegaFormIndex,
@@ -221,6 +234,8 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
     hasShiny,
     hasMegaEvolution,
     megaForms,
+    specialFormEntries,
+    regionalFormEntries,
     activeMegaFormIndex,
     activeMegaForm,
     showShiny,

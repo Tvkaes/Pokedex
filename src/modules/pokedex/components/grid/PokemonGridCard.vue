@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { PokemonGridEntry } from '@/types/pokemon.types'
 import PokemonTypeBadge from '@pokedex/components/shared/PokemonTypeBadge.vue'
 import PokemonGridMegaToggleButton from './PokemonGridMegaToggleButton.vue'
+import PokemonGridDynamaxToggleButton from './PokemonGridDynamaxToggleButton.vue'
 import { useAlternateForms } from '@/composables/useAlternateForms'
 import FrostedCard from '@/components/base/FrostedCard.vue'
 import { prefetchPokemonDetails } from '@/services/pokemonService'
@@ -44,10 +45,23 @@ const { activeForm, activeFormIndex, hasAlternateForms, toggleForm, resetForms }
 })
 const hasMegaForm = computed(() => props.entry.hasMegaEvolution && hasAlternateForms.value)
 const isMegaActive = computed(() => activeFormIndex.value !== null)
+const formEntries = computed(() => alternateForms.value.map((form, index) => ({ form, index })))
 const formStones = computed(() =>
-  alternateForms.value.map((form, index) => ({ form, index })).filter(({ form }) => Boolean(form.stone?.sprite))
+  formEntries.value.filter(
+    ({ form }) => (form.variantKind === 'mega' || form.variantKind === 'primal') && Boolean(form.stone?.sprite)
+  )
 )
+const dynamaxEntries = computed(() => formEntries.value.filter(({ form }) => form.variantKind === 'dynamax'))
+const hasFormToggles = computed(() => formStones.value.length > 0 || dynamaxEntries.value.length > 0)
 const hasMultipleStones = computed(() => formStones.value.length > 1)
+const activeVariantLabel = computed(() => {
+  if (!isMegaActive.value) return null
+  const kind = activeForm.value?.variantKind
+  if (kind === 'dynamax') return 'Dynamax'
+  if (kind === 'primal') return 'Primal'
+  if (kind === 'mega') return 'Mega'
+  return null
+})
 const pulseMode = ref<'mega' | 'base' | null>(null)
 let pulseTimeout: ReturnType<typeof setTimeout> | null = null
 const hasPrefetched = ref(false)
@@ -77,16 +91,10 @@ function handlePrefetch() {
   void prefetchPokemonDetails(targetId)
 }
 
-function handleMegaToggle(targetIndex?: number) {
-  if (!hasMegaForm.value) return
-  if (typeof targetIndex === 'number') {
-    toggleForm(targetIndex)
-  } else {
-    const nextIndex = activeFormIndex.value === null ? 0 : (activeFormIndex.value + 1) % alternateForms.value.length
-    toggleForm(nextIndex)
-  }
-
-  triggerPulse(activeFormIndex.value === null ? 'base' : 'mega')
+function handleFormToggle(targetIndex: number) {
+  if (!hasAlternateForms.value) return
+  toggleForm(targetIndex)
+  triggerPulse(activeFormIndex.value === null ? 'mega' : 'base')
   playCry()
 }
 
@@ -159,12 +167,12 @@ function playCry() {
       <div
         class="flex items-center gap-4"
         :class="{
-          'justify-end': !hasMegaForm || !stoneSprite,
-          'justify-between': hasMegaForm && stoneSprite,
+          'justify-end': !hasFormToggles,
+          'justify-between': hasFormToggles,
         }"
       >
         <div
-          v-if="hasMegaForm && formStones.length"
+          v-if="hasFormToggles"
           class="flex items-center gap-2"
           :class="{ 'flex-wrap': hasMultipleStones }"
         >
@@ -175,7 +183,15 @@ function playCry() {
             :is-mega-active="isMegaActive && activeFormIndex === index"
             :stone-sprite="form.stone?.sprite ?? undefined"
             :display-name="form.name"
-            @toggle="() => handleMegaToggle(index)"
+            @toggle="() => handleFormToggle(index)"
+          />
+          <PokemonGridDynamaxToggleButton
+            v-for="{ form, index } in dynamaxEntries"
+            :key="`${entry.id}-dynamax-${index}`"
+            :is-visible="true"
+            :is-active="activeFormIndex === index"
+            :display-name="form.name"
+            @toggle="() => handleFormToggle(index)"
           />
         </div>
         <PokemonTypeBadge :label="displayType" />
@@ -205,13 +221,13 @@ function playCry() {
         <div class="flex items-center gap-3">
           <p class="text-2xl font-light leading-none">#{{ displayFormattedId.replace('#', '') }}</p>
           <span
-            v-if="isMegaActive && hasMegaForm"
+            v-if="isMegaActive && activeVariantLabel"
             class="rounded-full bg-white/15 px-3 py-1 text-xs uppercase tracking-[0.3em]"
           >
-            Mega
+            {{ activeVariantLabel }}
           </span>
         </div>
-        <p :class="['mt-2 transition-all duration-200', isMegaActive && hasMegaForm ? 'text-3xl' : 'text-4xl']">
+        <p :class="['mt-2 transition-all duration-200', isMegaActive && activeVariantLabel ? 'text-3xl' : 'text-4xl']">
           {{ displayName }}
         </p>
       </div>

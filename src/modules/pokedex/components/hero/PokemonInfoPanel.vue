@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { PokemonAlternateForm, PokemonDisplayData } from '@/types/pokemon.types'
+import type { PokemonAlternateForm, PokemonDisplayData, PokemonFormEntry } from '@/types/pokemon.types'
 import PokemonTypeBadge from '@pokedex/components/shared/PokemonTypeBadge.vue'
 import PokemonInfoHeader from './PokemonInfoHeader.vue'
 import PokemonInfoSummaryCard from './PokemonInfoSummaryCard.vue'
@@ -13,6 +13,8 @@ const props = defineProps<{
   imperialWeight: string
   hasMegaEvolution: boolean
   megaForms: PokemonAlternateForm[]
+  specialFormEntries: PokemonFormEntry[]
+  regionalFormEntries: PokemonFormEntry[]
   activeMegaFormIndex: number | null
 }>()
 
@@ -30,7 +32,7 @@ interface SectionOption {
   disabled?: boolean
 }
 
-const hasAlternateForms = computed(() => props.megaForms.some((form) => form.variantKind !== 'mega' && form.variantKind !== 'primal'))
+const hasAlternateForms = computed(() => props.regionalFormEntries.length > 0)
 
 const sectionOptions = computed<SectionOption[]>(() => {
   const sections: SectionOption[] = [
@@ -70,7 +72,7 @@ function handleSectionSelect(sectionId: PokemonInfoSectionId) {
     <PokemonInfoHeader
       :pokemon="pokemon"
       :has-mega-evolution="hasMegaEvolution"
-      :mega-forms="megaForms"
+      :special-form-entries="specialFormEntries"
       :active-mega-form-index="activeMegaFormIndex"
       @select-mega-form="handleMegaSelect"
     />
@@ -99,8 +101,7 @@ function handleSectionSelect(sectionId: PokemonInfoSectionId) {
         <PokemonInfoDetailPanel
           :pokemon="pokemon"
           :section="activeSection"
-          :mega-forms="megaForms"
-          :has-mega-evolution="hasMegaEvolution"
+          :regional-form-entries="regionalFormEntries"
           :active-mega-form-index="activeMegaFormIndex"
           @select-form="handleMegaSelect"
         />
