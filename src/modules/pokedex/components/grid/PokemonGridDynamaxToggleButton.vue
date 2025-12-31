@@ -31,12 +31,12 @@ function handleClick() {
     <span class="sr-only">
       {{
         isActive
-          ? `Volver a la forma base desde ${displayName}`
-          : `Activar forma Dynamax ${displayName}`
+          ? `Return to base form from ${displayName}`
+          : `Activate Dynamax form ${displayName}`
       }}
     </span>
     <span class="dynamax-toggle__image" aria-hidden="true">
-      <img :src="iconSrc" alt="Icono Dynamax" loading="lazy" />
+      <img :src="iconSrc" alt="Dynamax icon" loading="lazy" />
     </span>
   </button>
 </template>

@@ -73,8 +73,27 @@ src/
 - **Aura rendering** – Glow colors adapt to the active type palette for instant visual storytelling.
 - **Navigation duality** – Desktop vertical nav + mobile horizontal nav keep the UX cohesive.
 - **Shiny toggle & cries** – Media composable manages permissions, motion, and playback seamlessly.
-- **Mega/primal awareness** – Grid entries detect alternate forms, surface accurate mega-stone sprites, and animate + play cries when toggling.
+- **Mega / primal / dynamax awareness** – Grid entries detect special forms, surface stone sprites (or Dynamax icons), and animate + play cries when toggling.
 - **Multi-stone UX** – Pokémon with more than one mega evolution display a responsive row of stones so each form is one click away.
+- **Competitive insights** – Hero details include a stat radar, recommended move categories, and quick ability summaries for instant team-building context.
+- **Forms tab parity** – Regional and cosmetic variants render as cards with variant kind/region context while keeping the base form action one tap away.
+
+---
+
+## 💥 Alternate Forms System
+
+The Pokédex now classifies every non-default form into two explicit buckets so the UI can keep battle-triggered transformations separate from regional/cosmetic variants:
+
+| Bucket | Source | Consumed by | Notes |
+|--------|--------|-------------|-------|
+| `specialFormEntries` | Mega, Primal, Dynamax & Gigantamax | `PokemonInfoHeader`, `PokemonGridCard`, `PokemonGridMegaToggleButton`, `PokemonGridDynamaxToggleButton` | Buttons render official mega stone sprites or the custom `dynamax.svg` glyph and reuse cry + sprite motion logic via `usePokemonMedia`. |
+| `regionalFormEntries` | Regional names (Alola, Hisui, Galar, etc.) + other special keywords | `PokemonInfoDetailPanel`, `PokemonFormsList`, `PokemonFormVariantCard` | Cards keep the base form accessible, hide the active mega index, and show dual-type badges per variant. |
+
+This split is powered by:
+
+1. `pokemonService.classifyVariant` → tags each variety with `variantKind` (mega/primal/dynamax/regional/special).
+2. `PokemonFormEntry` (in `pokemon.types.ts`) → shared shape `{ form, index, secondaryType }` so components can reference the same metadata.
+3. `usePokemonMedia` → exposes both arrays (`specialFormEntries`, `regionalFormEntries`) alongside sprite/cry management so hero and grid views stay in sync.
 
 ---
 
@@ -85,6 +104,8 @@ src/
 - **Mega evolution indicator:** Grid cards show a glassy mega stone button when alternate forms exist, complete with official sprites gathered via PokéAPI items.
 - **Interactive mega toggles:** Clicking a stone animates the sprite (enter + exit pulses), swaps stats/name/ID, and replays the Pokémon cry for tactile feedback.
 - **Cry + media parity:** Grid interactions reuse the same cry handling as the hero card, so audio feedback is consistent across views.
+- **Dynamax-ready hero & grid:** Special form buttons now include a dedicated Dynamax/Gigantamax icon so giant forms sit alongside Mega and Primal states both in the hero header and grid cards.
+- **Split alternate-form arrays:** Alternate forms are classified into `specialFormEntries` (Mega/Primal/Dynamax) and `regionalFormEntries`, letting the header focus on battle-triggered forms while the Forms tab restores regionals and other cosmetics.
 
 ---
 

@@ -212,6 +212,7 @@ export interface PokemonAlternateForm {
   name: string
   formattedId: string
   sprite: string
+  spriteShiny?: string | null
   primaryType: string
   variantKind?: 'regional' | 'special' | 'mega' | 'primal' | 'dynamax'
   region?: string

@@ -182,6 +182,11 @@ async function extractAlternateForms(speciesData: PokemonSpeciesData): Promise<P
             formData.sprites?.other?.home?.front_default ??
             formData.sprites?.front_default ??
             '',
+          spriteShiny:
+            formData.sprites?.other?.['official-artwork']?.front_shiny ??
+            formData.sprites?.other?.home?.front_shiny ??
+            formData.sprites?.front_shiny ??
+            null,
           primaryType: formData.types?.[0]?.type?.name ?? 'normal',
           cryUrl: formData.cries?.latest ?? formData.cries?.legacy ?? undefined,
           types: formData.types,

@@ -28,9 +28,9 @@ function handleSelect(index: number | null) {
               class="w-full rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/90 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
               @click="handleSelect(null)"
             >
-              Volver a estado base
+              Return to base form
             </button>
-            <p class="text-[11px] uppercase tracking-[0.4em] text-white/40">Otras formas</p>
+            <p class="text-[11px] uppercase tracking-[0.4em] text-white/40">Other forms</p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <PokemonFormVariantCard

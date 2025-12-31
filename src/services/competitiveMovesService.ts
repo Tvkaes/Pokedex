@@ -131,45 +131,45 @@ function buildReason(moveScore: MoveScore, roleTag: string): string {
 
   if (moveScore.isDamaging) {
     const accuracyLabel = moveScore.move.accuracy ? `${moveScore.move.accuracy}%` : 'variable'
-    parts.push(`BP ${moveScore.power} con ${accuracyLabel} de precisión`)
+    parts.push(`BP ${moveScore.power} with ${accuracyLabel} accuracy`)
   }
 
   if (moveScore.tags.includes('setup')) {
-    parts.push('Proporciona setup inmediato')
+    parts.push('Provides immediate setup')
   }
 
   if (moveScore.tags.includes('priority')) {
-    parts.push('Prioridad para rematar')
+    parts.push('Priority to finish threats')
   }
 
   if (moveScore.tags.includes('stab')) {
-    parts.push('Aprovecha STAB del Pokémon')
+    parts.push('Leverages the Pokémon STAB')
   }
 
   if (moveScore.coverageTargets.length) {
-    parts.push(`Cubre amenazas como ${moveScore.coverageTargets.join(', ')}`)
+    parts.push(`Covers threats such as ${moveScore.coverageTargets.join(', ')}`)
   }
 
   if (moveScore.tags.includes('recovery')) {
-    parts.push('Recuperación fiable')
+    parts.push('Reliable recovery')
   } else if (moveScore.tags.includes('drain')) {
-    parts.push('Drena vida con cada golpe')
+    parts.push('Drains HP each strike')
   }
 
   if (moveScore.tags.includes('hazard')) {
-    parts.push('Coloca hazards de entrada')
+    parts.push('Sets entry hazards')
   }
 
   if (moveScore.tags.includes('removal')) {
-    parts.push('Controla hazards enemigos')
+    parts.push('Removes enemy hazards')
   }
 
   if (moveScore.tags.includes('taunt')) {
-    parts.push('Bloquea setups rivales')
+    parts.push('Blocks opposing setup')
   }
 
   if (moveScore.tags.includes('status')) {
-    parts.push('Aplica estados persistentes')
+    parts.push('Applies lingering status')
   }
 
   if (!parts.length && moveScore.englishEffect) {

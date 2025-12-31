@@ -35,7 +35,7 @@ function handleBack() {
         class="text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-white/70 hover:text-white border border-white/20 hover:border-white/50 rounded-full px-3 sm:px-4 py-1.5 transition-colors"
         @click="handleBack"
       >
-        ← Volver
+        ← Back
       </button>
     </div>
     <div class="grid gap-1.5 sm:gap-2.5 grid-cols-1 sm:grid-cols-2 max-h-[280px] overflow-y-auto pr-1">

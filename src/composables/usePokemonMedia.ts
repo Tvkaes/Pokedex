@@ -90,9 +90,18 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
     },
   }))
 
-  const hasShiny = computed(() => Boolean(pokemon.value.spriteShiny))
+  const activeFormShinySprite = computed(() => activeMegaForm.value?.spriteShiny ?? null)
+  const hasShiny = computed(() => {
+    if (activeMegaForm.value) {
+      return Boolean(activeFormShinySprite.value)
+    }
+    return Boolean(pokemon.value.spriteShiny)
+  })
   const displaySprite = computed(() => {
     if (activeMegaForm.value) {
+      if (showShiny.value && activeFormShinySprite.value) {
+        return activeFormShinySprite.value
+      }
       return activeMegaForm.value.sprite
     }
 
@@ -107,7 +116,8 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
    * Switches between base and shiny sprite, guarded by shiny availability.
    */
   function toggleShiny() {
-    if (!hasShiny.value || activeMegaFormIndex.value !== null) return
+    const shinySource = activeMegaForm.value?.spriteShiny ?? pokemon.value.spriteShiny
+    if (!shinySource) return
     showShiny.value = !showShiny.value
   }
 
@@ -124,6 +134,7 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
 
   function selectMegaForm(index: number | null) {
     if (index === null) {
+      resetShiny()
       resetMegaForm()
       void playCry(pokemon.value.cryUrl)
       return
@@ -196,6 +207,20 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
       replaySpriteAnimation()
       if (isShiny && !prev) {
         void playShinyCue()
+      }
+    }
+  )
+
+  watch(
+    () => ({
+      activeShiny: activeFormShinySprite.value,
+      isUsingForm: activeMegaForm.value !== null,
+      baseShiny: pokemon.value.spriteShiny ?? null,
+    }),
+    ({ activeShiny, isUsingForm, baseShiny }) => {
+      const shinySource = isUsingForm ? activeShiny : baseShiny
+      if (!shinySource && showShiny.value) {
+        showShiny.value = false
       }
     }
   )

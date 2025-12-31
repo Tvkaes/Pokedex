@@ -68,27 +68,18 @@ const hasPrefetched = ref(false)
 const cryAudio = ref<HTMLAudioElement | null>(null)
 
 const displayName = computed(() => activeForm.value?.name ?? props.entry.name)
-const displaySprite = computed(() => activeForm.value?.sprite ?? props.entry.sprite)
+const displaySprite = computed(() => activeForm.value?.spriteShiny ?? activeForm.value?.sprite ?? props.entry.sprite)
 const displayType = computed(() => activeForm.value?.primaryType ?? props.entry.primaryType)
 const displayFormattedId = computed(() => activeForm.value?.formattedId ?? props.entry.formattedId)
-const activeStone = computed(() => {
-  if (activeForm.value) {
-    return activeForm.value.stone ?? formStones.value[0]?.form.stone
-  }
-  return formStones.value[0]?.form.stone
-})
-const stoneSprite = computed(() => activeStone.value?.sprite ?? null)
 
 function handleClick() {
-  const targetId = activeForm.value?.id ?? props.entry.id
-  emit('select', targetId)
+  emit('select', props.entry.id)
 }
 
 function handlePrefetch() {
   if (hasPrefetched.value) return
   hasPrefetched.value = true
-  const targetId = activeForm.value?.id ?? props.entry.id
-  void prefetchPokemonDetails(targetId)
+  void prefetchPokemonDetails(props.entry.id)
 }
 
 function handleFormToggle(targetIndex: number) {
