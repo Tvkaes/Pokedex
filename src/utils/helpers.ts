@@ -1,4 +1,9 @@
-import type { PokemonData, PokemonDisplayData, PokemonSpeciesData } from '@/types/pokemon.types'
+import type {
+  PokemonData,
+  PokemonDisplayData,
+  PokemonFeaturedAbility,
+  PokemonSpeciesData,
+} from '@/types/pokemon.types'
 import { STAT_LABELS } from './constants'
 
 /**
@@ -54,4 +59,16 @@ export function mapStats(pokemon: PokemonData): PokemonDisplayData['stats'] {
     const percentage = Math.min((value / 255) * 100, 100)
     return { label, value, percentage }
   })
+}
+
+export function selectFeaturedAbility(pokemon: PokemonData): PokemonFeaturedAbility | null {
+  if (!pokemon.abilities?.length) return null
+  const preferred = pokemon.abilities.find((ability) => !ability.is_hidden) ?? pokemon.abilities[0]
+  const slug = preferred?.ability?.name
+  if (!slug) return null
+  return {
+    name: formatPokemonName(slug.replace('-', ' ')),
+    slug,
+    isHidden: preferred.is_hidden,
+  }
 }

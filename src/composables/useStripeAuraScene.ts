@@ -21,6 +21,7 @@ export function useStripeAuraScene({ primary, secondary }: UseStripeAuraSceneOpt
   const ribbonMaterials: THREE.ShaderMaterial[] = []
   let gridMaterial: THREE.ShaderMaterial | null = null
   let particleMaterial: THREE.ShaderMaterial | null = null
+  let noiseMaterial: THREE.ShaderMaterial | null = null
 
   const colorState = {
     primary: new THREE.Color(primary.value || DEFAULT_PRIMARY),
@@ -65,6 +66,7 @@ export function useStripeAuraScene({ primary, secondary }: UseStripeAuraSceneOpt
     createRibbons()
     createGridPlane()
     createParticles()
+    createNoiseOverlay()
 
     startTime = performance.now()
     animate()
@@ -245,6 +247,69 @@ export function useStripeAuraScene({ primary, secondary }: UseStripeAuraSceneOpt
     scene.add(particles)
   }
 
+  function createNoiseOverlay() {
+    if (!scene) return
+    const geometry = new THREE.PlaneGeometry(16, 16, 1, 1)
+    const uniforms = {
+      uTime: { value: 0 },
+      uPrimary: { value: colorState.primary.clone() },
+      uIntensity: { value: 0.25 },
+    }
+
+    noiseMaterial = new THREE.ShaderMaterial({
+      uniforms,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        precision mediump float;
+        varying vec2 vUv;
+        uniform float uTime;
+        uniform vec3 uPrimary;
+        uniform float uIntensity;
+
+        float random(vec2 st) {
+          return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+        }
+
+        float noise(vec2 st) {
+          vec2 i = floor(st);
+          vec2 f = fract(st);
+          float a = random(i);
+          float b = random(i + vec2(1.0, 0.0));
+          float c = random(i + vec2(0.0, 1.0));
+          float d = random(i + vec2(1.0, 1.0));
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          return mix(a, b, u.x) +
+                 (c - a) * u.y * (1.0 - u.x) +
+                 (d - b) * u.x * u.y;
+        }
+
+        void main() {
+          float grain = noise(vUv * 400.0 + uTime * 0.8);
+          grain += noise(vUv * 200.0 - uTime * 0.6) * 0.35;
+          float vignette = smoothstep(0.2, 0.8, vUv.x) * smoothstep(0.2, 0.8, vUv.y);
+          float alpha = grain * 0.18 * uIntensity * vignette;
+          if (alpha < 0.01) discard;
+          vec3 color = mix(vec3(0.05, 0.06, 0.12), uPrimary, 0.15);
+          gl_FragColor = vec4(color, alpha);
+        }
+      `,
+    })
+
+    const plane = new THREE.Mesh(geometry, noiseMaterial)
+    plane.position.set(0, 0, -1.5)
+    scene.add(plane)
+  }
+
   function animate() {
     animationFrame = requestAnimationFrame(animate)
     const elapsed = (performance.now() - startTime) * 0.001
@@ -262,6 +327,10 @@ export function useStripeAuraScene({ primary, secondary }: UseStripeAuraSceneOpt
 
     if (particleMaterial?.uniforms.uTime) {
       particleMaterial.uniforms.uTime.value = elapsed
+    }
+
+    if (noiseMaterial?.uniforms.uTime) {
+      noiseMaterial.uniforms.uTime.value = elapsed
     }
 
     renderer?.render(scene as THREE.Scene, camera as THREE.Camera)
@@ -293,6 +362,7 @@ export function useStripeAuraScene({ primary, secondary }: UseStripeAuraSceneOpt
     ribbonMaterials.length = 0
     gridMaterial = null
     particleMaterial = null
+    noiseMaterial = null
     renderer = null
     scene = null
     camera = null
@@ -324,6 +394,10 @@ export function useStripeAuraScene({ primary, secondary }: UseStripeAuraSceneOpt
 
     if (particleMaterial?.uniforms.uAccent) {
       particleMaterial.uniforms.uAccent.value.copy(colorState.accent)
+    }
+
+    if (noiseMaterial?.uniforms.uPrimary) {
+      noiseMaterial.uniforms.uPrimary.value.copy(colorState.primary)
     }
   }
 

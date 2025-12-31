@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import type { PokemonAlternateForm, PokemonDisplayData } from '@/types/pokemon.types'
 import PokemonTypeBadge from '@pokedex/components/shared/PokemonTypeBadge.vue'
-import PokemonGridMegaToggleButton from '@pokedex/components/grid/PokemonGridMegaToggleButton.vue'
+import PokemonInfoHeader from './PokemonInfoHeader.vue'
+import PokemonInfoSummaryCard from './PokemonInfoSummaryCard.vue'
+import PokemonInfoDetailPanel from './PokemonInfoDetailPanel.vue'
+import type { PokemonInfoSectionId } from '@pokedex/types/pokemon-info.types'
 
 const props = defineProps<{
   pokemon: PokemonDisplayData
@@ -16,40 +20,64 @@ const emit = defineEmits<{
   selectMegaForm: [index: number | null]
 }>()
 
-function handleMegaToggle(index: number) {
-  if (props.activeMegaFormIndex === index) {
-    emit('selectMegaForm', null)
-    return
-  }
-
+function handleMegaSelect(index: number | null) {
   emit('selectMegaForm', index)
+}
+
+interface SectionOption {
+  id: PokemonInfoSectionId
+  label: string
+  disabled?: boolean
+}
+
+const hasAlternateForms = computed(() => props.megaForms.some((form) => form.variantKind !== 'mega' && form.variantKind !== 'primal'))
+
+const sectionOptions = computed<SectionOption[]>(() => {
+  const sections: SectionOption[] = [
+    { id: 'entry', label: 'Entry' },
+    { id: 'stats', label: 'Stats' },
+    { id: 'ability', label: 'Ability' },
+  ]
+
+  const hasForms = hasAlternateForms.value
+  sections.push({
+    id: 'forms',
+    label: 'Forms',
+    disabled: !hasForms,
+  })
+
+  return sections
+})
+
+const activeSection = ref<PokemonInfoSectionId>('entry')
+
+watch(
+  () => props.pokemon.id,
+  () => {
+    activeSection.value = 'entry'
+  }
+)
+
+function handleSectionSelect(sectionId: PokemonInfoSectionId) {
+  if (sectionId === 'entry' || sectionId === 'stats' || sectionId === 'ability' || sectionId === 'forms') {
+    activeSection.value = sectionId
+  }
 }
 </script>
 
 <template>
   <div class="space-y-4 sm:space-y-6 text-left">
-    <div class="space-y-1 sm:space-y-3">
-      <p class="text-xs sm:text-sm uppercase tracking-[0.4em] sm:tracking-[0.5em] text-white/80">
-        #{{ pokemon.id.toString().padStart(3, '0') }}
-      </p>
-      <div class="flex flex-wrap items-center gap-3">
-        <h1 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-display font-semibold leading-tight">
-          {{ pokemon.name }}
-        </h1>
-        <div v-if="hasMegaEvolution && megaForms.length" class="flex flex-wrap items-center gap-2">
-          <PokemonGridMegaToggleButton
-            v-for="(form, index) in megaForms"
-            :key="form.id"
-            :is-visible="Boolean(form.stone?.sprite)"
-            :is-mega-active="activeMegaFormIndex === index"
-            :stone-sprite="form.stone?.sprite ?? undefined"
-            :display-name="form.name"
-            @toggle="() => handleMegaToggle(index)"
-          />
-        </div>
-      </div>
-    </div>
+    <PokemonInfoHeader
+      :pokemon="pokemon"
+      :has-mega-evolution="hasMegaEvolution"
+      :mega-forms="megaForms"
+      :active-mega-form-index="activeMegaFormIndex"
+      @select-mega-form="handleMegaSelect"
+    />
 
+    <div class="flex flex-wrap gap-2 sm:gap-3">
+      <PokemonTypeBadge v-for="type in pokemon.types" :key="type.type.name" :label="type.type.name" />
+    </div>
     <div class="space-y-1 text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/90">
       <p>
         Height ·
@@ -61,12 +89,46 @@ function handleMegaToggle(index: number) {
       </p>
     </div>
 
-    <p class="text-sm sm:text-base max-w-md leading-relaxed text-white/90 line-clamp-4">
-      {{ pokemon.description || 'Description not available yet. Try another species.' }}
-    </p>
-
-    <div class="flex flex-wrap gap-2 sm:gap-3">
-      <PokemonTypeBadge v-for="type in pokemon.types" :key="type.type.name" :label="type.type.name" />
-    </div>
+    <PokemonInfoSummaryCard
+      :description="pokemon.description"
+      :sections="sectionOptions"
+      :active-section="activeSection"
+      @select="handleSectionSelect"
+    >
+      <template #content="{ activeSection }">
+        <PokemonInfoDetailPanel
+          :pokemon="pokemon"
+          :section="activeSection"
+          :mega-forms="megaForms"
+          :has-mega-evolution="hasMegaEvolution"
+          :active-mega-form-index="activeMegaFormIndex"
+          @select-form="handleMegaSelect"
+        />
+      </template>
+    </PokemonInfoSummaryCard>
   </div>
 </template>
+
+<style scoped>
+.panel-slide-enter-active,
+.panel-slide-leave-active {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.panel-slide-enter-from,
+.panel-slide-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.panel-toggle-enter-active,
+.panel-toggle-leave-active {
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.panel-toggle-enter-from,
+.panel-toggle-leave-to {
+  opacity: 0;
+  transform: translateY(24px);
+}
+</style>

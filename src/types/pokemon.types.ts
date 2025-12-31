@@ -24,6 +24,23 @@ export interface PokemonAbility {
   }
 }
 
+export interface PokemonAbilityDetails {
+  id: number
+  name: string
+  effect_entries: Array<{
+    effect: string
+    short_effect: string
+    language: { name: string }
+  }>
+}
+
+export interface PokemonFeaturedAbility {
+  name: string
+  slug: string
+  isHidden: boolean
+  description?: string | null
+}
+
 export interface PokemonSprites {
   other?: {
     ['official-artwork']?: {
@@ -98,6 +115,7 @@ export interface PokemonDisplayData {
   }>
   types: PokemonType[]
   abilities: PokemonAbility[]
+  featuredAbility?: PokemonFeaturedAbility | null
   height: number
   weight: number
   sprite: string
@@ -113,6 +131,15 @@ export interface PokemonAlternateForm {
   formattedId: string
   sprite: string
   primaryType: string
+  variantKind?: 'regional' | 'special' | 'mega' | 'primal'
+  region?: string
+  types?: PokemonType[]
+  abilities?: PokemonAbility[]
+  stats?: PokemonDisplayData['stats']
+  height?: number
+  weight?: number
+  description?: string
+  genus?: string
   stone?: {
     slug: string
     sprite?: string | null

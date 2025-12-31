@@ -5,13 +5,26 @@ import { useAlternateForms } from '@/composables/useAlternateForms'
 /**
  * Handles sprite display logic, shiny toggles, and cry playback for the active Pokémon.
  */
+type NavigatorWithUserActivation = Navigator & {
+  userActivation?: {
+    isActive: boolean
+  }
+}
+
+function hasInitialUserActivation(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const maybeNavigator = navigator as NavigatorWithUserActivation
+  return Boolean(maybeNavigator.userActivation?.isActive)
+}
+
 export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
   const showShiny = ref(false)
   const cryAudio = ref<HTMLAudioElement | null>(null)
   const shinyAudio = ref<HTMLAudioElement | null>(null)
-  const hasUserInteracted = ref(false)
+  const hasUserInteracted = ref(hasInitialUserActivation())
   const spriteAnimationKey = ref(0)
   const shinySoundUrl = '/sounds/shiny.wav'
+  const pendingCryUrl = ref<string | null>(null)
 
   const isFlyingType = computed(() => pokemon.value.types?.some((type) => type.type.name === 'flying') ?? false)
   const megaForms = computed(() => pokemon.value.alternateForms ?? [])
@@ -114,8 +127,15 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
   /**
    * Plays the Pokémon cry once the user has interacted with the page (browser auto-play rule).
    */
-  async function playCry(url?: string) {
-    if (!url || typeof Audio === 'undefined' || !hasUserInteracted.value) return
+  async function playCry(url?: string, options: { force?: boolean } = {}) {
+    if (!url || typeof Audio === 'undefined') return
+
+    if (!hasUserInteracted.value && !options.force) {
+      pendingCryUrl.value = url
+      return
+    }
+
+    pendingCryUrl.value = null
 
     cryAudio.value?.pause()
 
@@ -173,11 +193,17 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
 
   onMounted(() => {
     if (typeof window === 'undefined') return
+
     const enableAudio = () => {
       hasUserInteracted.value = true
       window.removeEventListener('pointerdown', enableAudio)
       window.removeEventListener('keydown', enableAudio)
+
+      if (pendingCryUrl.value) {
+        void playCry(pendingCryUrl.value, { force: true })
+      }
     }
+
     window.addEventListener('pointerdown', enableAudio, { once: true })
     window.addEventListener('keydown', enableAudio, { once: true })
   })
@@ -196,6 +222,7 @@ export function usePokemonMedia(pokemon: ComputedRef<PokemonDisplayData>) {
     hasMegaEvolution,
     megaForms,
     activeMegaFormIndex,
+    activeMegaForm,
     showShiny,
     spriteAnimationKey,
     spriteMotion,

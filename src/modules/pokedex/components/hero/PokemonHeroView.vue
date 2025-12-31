@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import type { PokemonDisplayData } from '@/types/pokemon.types'
 import PokemonInfoPanel from '@pokedex/components/hero/PokemonInfoPanel.vue'
 import PokemonSpriteDisplay from '@pokedex/components/hero/PokemonSpriteDisplay.vue'
@@ -17,12 +17,11 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [id: number]
+  'theme-change': [{ primary: string; secondary?: string | null }]
 }>()
 
 const pokemonRef = computed(() => props.pokemon)
-const typeColor = computed(() => getTypeColor(props.primaryType))
 
-const { backgroundLabel, imperialHeight, imperialWeight } = usePokemonFormatting(pokemonRef)
 const {
   auraMotion,
   displaySprite,
@@ -30,12 +29,50 @@ const {
   hasMegaEvolution,
   megaForms,
   activeMegaFormIndex,
+  activeMegaForm,
   showShiny,
   spriteAnimationKey,
   spriteMotion,
   toggleShiny,
   selectMegaForm,
 } = usePokemonMedia(pokemonRef)
+
+const heroPokemon = computed<PokemonDisplayData>(() => {
+  if (!activeMegaForm.value) {
+    return pokemonRef.value
+  }
+
+  const form = activeMegaForm.value
+  return {
+    ...pokemonRef.value,
+    id: form.id,
+    formattedId: form.formattedId,
+    name: form.name,
+    description: form.description ?? pokemonRef.value.description,
+    genus: form.genus ?? pokemonRef.value.genus,
+    stats: form.stats ?? pokemonRef.value.stats,
+    types: form.types ?? pokemonRef.value.types,
+    abilities: form.abilities ?? pokemonRef.value.abilities,
+    height: form.height ?? pokemonRef.value.height,
+    weight: form.weight ?? pokemonRef.value.weight,
+    cryUrl: form.cryUrl ?? pokemonRef.value.cryUrl,
+  }
+})
+
+const heroPrimaryTypeName = computed(() => heroPokemon.value.types?.[0]?.type?.name ?? props.primaryType)
+const heroSecondaryTypeName = computed(() => heroPokemon.value.types?.[1]?.type?.name ?? null)
+
+const heroTypeColor = computed(() => getTypeColor(heroPrimaryTypeName.value))
+
+watch(
+  [heroPrimaryTypeName, heroSecondaryTypeName],
+  ([primary, secondary]) => {
+    emit('theme-change', { primary, secondary: secondary ?? null })
+  },
+  { immediate: true }
+)
+
+const { backgroundLabel, imperialHeight, imperialWeight } = usePokemonFormatting(heroPokemon)
 const {
   visibleNavigation,
   setHorizontalButtonRef,
@@ -66,7 +103,7 @@ function handleSelect(id: number) {
     <div class="relative flex-1 grid gap-6 lg:gap-12 lg:grid-cols-[1.2fr_1fr_0.35fr] p-6 sm:p-8 lg:p-12 xl:p-16 items-center">
       <div class="order-last lg:order-first">
         <PokemonInfoPanel
-          :pokemon="pokemon"
+          :pokemon="heroPokemon"
           :imperial-height="imperialHeight"
           :imperial-weight="imperialWeight"
           :has-mega-evolution="hasMegaEvolution"
@@ -78,8 +115,8 @@ function handleSelect(id: number) {
 
       <div class="order-first lg:order-none">
         <PokemonSpriteDisplay
-          :pokemon="pokemon"
-          :type-color="typeColor"
+          :pokemon="heroPokemon"
+          :type-color="heroTypeColor"
           :display-sprite="displaySprite"
           :show-shiny="showShiny"
           :has-shiny="hasShiny"

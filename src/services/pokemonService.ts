@@ -1,10 +1,20 @@
-import { fetchPokemon, fetchPokemonItem, fetchPokemonSpecies } from '@/utils/api'
-import { formatPokemonId, formatPokemonName, extractDescription, extractGenus, extractNativeName, mapStats } from '@/utils/helpers'
+import { fetchPokemon, fetchPokemonAbility, fetchPokemonItem, fetchPokemonSpecies } from '@/utils/api'
+import {
+  formatPokemonId,
+  formatPokemonName,
+  extractDescription,
+  extractGenus,
+  extractNativeName,
+  mapStats,
+  selectFeaturedAbility,
+} from '@/utils/helpers'
 import type { PokemonDetails } from '@/types/pokemon-details.types'
 import type {
+  PokemonAbilityDetails,
   PokemonAlternateForm,
   PokemonData,
   PokemonDisplayData,
+  PokemonFeaturedAbility,
   PokemonGridEntry,
   PokemonSpeciesData,
 } from '@/types/pokemon.types'
@@ -17,13 +27,79 @@ type PokemonBundle = {
   alternateForms: PokemonAlternateForm[]
 }
 
-const SPECIAL_FORM_KEYWORDS = ['mega', 'primal']
+type VariantClassification = {
+  kind: NonNullable<PokemonAlternateForm['variantKind']>
+  region?: string
+}
+
+const REGIONAL_VARIANTS = [
+  { keyword: 'alola', region: 'Alola' },
+  { keyword: 'galar', region: 'Galar' },
+  { keyword: 'hisui', region: 'Hisui' },
+  { keyword: 'paldea', region: 'Paldea' },
+]
+
+const SPECIAL_VARIANT_KEYWORDS = [
+  'attack',
+  'defense',
+  'speed',
+  'school',
+  'shield',
+  'blade',
+  'origin',
+  'sky',
+  'zen',
+  'dawn',
+  'dusk',
+  'midnight',
+  'sunny',
+  'rainy',
+  'snowy',
+  'therian',
+  'incarnate',
+  'resolute',
+  'pirouette',
+  'trash',
+  'sand',
+  'average',
+  'sensu',
+  'pom-pom',
+  'pau',
+  'baile',
+  'heat',
+  'wash',
+  'frost',
+  'fan',
+  'mow',
+]
+
 type MegaStoneAsset = { slug: string; sprite?: string | null }
 const megaStoneCache = new Map<string, MegaStoneAsset | undefined>()
 
-function isSpecialForm(name: string): boolean {
+function classifyVariant(name: string): VariantClassification | null {
   const normalized = name.toLowerCase()
-  return SPECIAL_FORM_KEYWORDS.some((keyword) => normalized.includes(keyword))
+
+  if (normalized.includes('mega')) {
+    return { kind: 'mega' }
+  }
+
+  if (normalized.includes('primal')) {
+    return { kind: 'primal' }
+  }
+
+  const regionalMatch = REGIONAL_VARIANTS.find(({ keyword }) => normalized.includes(keyword))
+  if (regionalMatch) {
+    return {
+      kind: 'regional',
+      region: regionalMatch.region,
+    }
+  }
+
+  if (SPECIAL_VARIANT_KEYWORDS.some((keyword) => normalized.includes(keyword))) {
+    return { kind: 'special' }
+  }
+
+  return null
 }
 
 async function resolveMegaStoneForForm(formName: string): Promise<MegaStoneAsset | undefined> {
@@ -54,13 +130,27 @@ async function resolveMegaStoneForForm(formName: string): Promise<MegaStoneAsset
 
 async function extractAlternateForms(speciesData: PokemonSpeciesData): Promise<PokemonAlternateForm[]> {
   const varieties = speciesData?.varieties ?? []
-  const specialVarieties = varieties.filter((variety) => !variety.is_default && isSpecialForm(variety.pokemon.name))
-  if (!specialVarieties.length) {
+  const classifiedVarieties = varieties
+    .filter((variety) => !variety.is_default)
+    .map((variety) => {
+      const classification = classifyVariant(variety.pokemon.name)
+      return classification
+        ? {
+            variety,
+            classification,
+          }
+        : null
+    })
+    .filter((entry): entry is { variety: PokemonSpeciesData['varieties'][number]; classification: VariantClassification } =>
+      Boolean(entry)
+    )
+
+  if (!classifiedVarieties.length) {
     return []
   }
 
   const forms = await Promise.all(
-    specialVarieties.map(async (variety) => {
+    classifiedVarieties.map(async ({ variety, classification }) => {
       try {
         const formData = await fetchPokemon(variety.pokemon.name)
         const stoneAsset = await resolveMegaStoneForForm(variety.pokemon.name)
@@ -82,6 +172,15 @@ async function extractAlternateForms(speciesData: PokemonSpeciesData): Promise<P
             '',
           primaryType: formData.types?.[0]?.type?.name ?? 'normal',
           cryUrl: formData.cries?.latest ?? formData.cries?.legacy ?? undefined,
+          types: formData.types,
+          abilities: formData.abilities,
+          stats: mapStats(formData),
+          height: formData.height / 10,
+          weight: formData.weight / 10,
+          description: extractDescription(speciesData),
+          genus: extractGenus(speciesData),
+          variantKind: classification.kind,
+          ...(classification.region ? { region: classification.region } : {}),
           ...(stone ? { stone } : {}),
         }
 
@@ -93,7 +192,9 @@ async function extractAlternateForms(speciesData: PokemonSpeciesData): Promise<P
     })
   )
 
-  return forms.filter((form): form is PokemonAlternateForm => form !== null)
+  return forms
+    .filter((form): form is PokemonAlternateForm => form !== null)
+    .filter((form) => form.variantKind !== 'mega' && form.variantKind !== 'primal')
 }
 
 async function fetchPokemonBundle(identifier: string | number): Promise<PokemonBundle> {
@@ -102,7 +203,10 @@ async function fetchPokemonBundle(identifier: string | number): Promise<PokemonB
   return { data, species, alternateForms }
 }
 
-function mapDisplayData(bundle: PokemonBundle): PokemonDisplayData {
+function mapDisplayData(
+  bundle: PokemonBundle,
+  featuredAbilityOverride?: PokemonFeaturedAbility | null
+): PokemonDisplayData {
   const { data, species, alternateForms } = bundle
   return {
     id: data.id,
@@ -114,6 +218,7 @@ function mapDisplayData(bundle: PokemonBundle): PokemonDisplayData {
     stats: mapStats(data),
     types: data.types,
     abilities: data.abilities,
+    featuredAbility: featuredAbilityOverride ?? selectFeaturedAbility(data),
     height: data.height / 10,
     weight: data.weight / 10,
     sprite:
@@ -186,14 +291,33 @@ export async function getGenerationGridEntries(generationId: string): Promise<Po
   return results.filter((entry): entry is PokemonGridEntry => Boolean(entry))
 }
 
+function extractAbilityDescription(details?: PokemonAbilityDetails | null): string | null {
+  if (!details?.effect_entries?.length) return null
+  const entry = details.effect_entries.find((item) => item.language?.name === 'en')
+  return entry?.short_effect ?? entry?.effect ?? null
+}
+
 export async function getPokemonDetails(identifier: string | number): Promise<PokemonDetails> {
   const bundle = await fetchPokemonBundle(identifier)
   const primaryType = bundle.data.types?.[0]?.type?.name ?? 'normal'
+  const featuredAbility = selectFeaturedAbility(bundle.data)
+  let abilityDescription: string | null = null
+
+  if (featuredAbility?.slug) {
+    try {
+      const details = await fetchPokemonAbility(featuredAbility.slug)
+      abilityDescription = extractAbilityDescription(details)
+    } catch (error) {
+      console.warn(`Failed to fetch ability details for ${featuredAbility.slug}`, error)
+    }
+  }
+
+  const display = mapDisplayData(bundle, featuredAbility ? { ...featuredAbility, description: abilityDescription } : featuredAbility)
 
   return {
     primaryType,
     raw: bundle.data,
     species: bundle.species,
-    display: mapDisplayData(bundle),
+    display,
   }
 }

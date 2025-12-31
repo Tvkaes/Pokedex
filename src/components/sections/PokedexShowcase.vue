@@ -6,30 +6,28 @@ import PokemonHeroView from '@pokedex/components/hero/PokemonHeroView.vue'
 import PokemonGridView from '@pokedex/components/grid/PokemonGridView.vue'
 import PokedexViewToggle from '@pokedex/components/controls/PokedexViewToggle.vue'
 import PokedexGenerationFilterPanel from '@pokedex/components/filters/PokedexGenerationFilterPanel.vue'
-import { getTypeColor } from '@/utils/typeColors'
 import { POKEMON_GENERATIONS, DEFAULT_GENERATION_ID } from '@pokedex/data/generations'
 import StripeAuraBackground from '@/components/backgrounds/StripeAuraBackground.vue'
 import ScrollToTopButton from '@/components/ui/ScrollToTopButton.vue'
 import { useScrollTopButton } from '@/composables/useScrollTopButton'
+import { useHeroTheme } from '@/composables/useHeroTheme'
 
 const dataStore = usePokemonDataStore()
 const viewStore = usePokemonViewStore()
 
 const accentType = computed(() => dataStore.primaryType)
-const heroColor = computed(() => getTypeColor(accentType.value))
 const secondaryType = computed(() => dataStore.pokemon?.types?.[1]?.type?.name ?? null)
-const secondaryHeroColor = computed(() => getTypeColor(secondaryType.value ?? accentType.value))
+
+const {
+  heroColor,
+  secondaryHeroColor,
+  heroGradientStyle,
+  handleThemeChange,
+} = useHeroTheme(accentType, secondaryType)
+
 const isHeroView = computed(() => viewStore.viewMode === 'hero')
 const isGridView = computed(() => viewStore.viewMode === 'grid')
 const generationEntries = computed(() => dataStore.getGenerationEntries(viewStore.activeGeneration))
-const heroGradientStyle = computed(() => {
-  const primaryHex = heroColor.value.color || '#B3272C'
-  const secondaryHex = secondaryHeroColor.value.color
-  return {
-    background: `radial-gradient(circle at 25% 20%, ${primaryHex} 0%, ${secondaryHex} 45%, #020617 100%)`,
-    backgroundColor: primaryHex,
-  }
-})
 
 const { showScrollTop, scrollToTop } = useScrollTopButton(isGridView)
 
@@ -91,6 +89,7 @@ onMounted(() => {
             :primary-type="accentType"
             class="relative z-20"
             @select="handleSelect"
+            @theme-change="handleThemeChange"
           />
         </template>
         <div v-else-if="dataStore.isLoading" key="hero-loading" class="min-h-screen flex items-center justify-center">
