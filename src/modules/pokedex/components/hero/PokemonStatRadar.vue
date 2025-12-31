@@ -6,9 +6,9 @@ const props = defineProps<{
   stats: PokemonDisplayData['stats']
 }>()
 
-const SVG_SIZE = 180
+const SVG_SIZE = 140
 const CENTER = SVG_SIZE / 2
-const RADIUS = 65
+const RADIUS = 50
 const GRID_LEVELS = [0.4, 0.7, 1]
 
 function polarPoint(percentage: number, index: number, total: number) {
@@ -22,7 +22,7 @@ function polarPoint(percentage: number, index: number, total: number) {
 
 function labelPoint(index: number, total: number) {
   const angle = (Math.PI * 2 * index) / total - Math.PI / 2
-  const distance = RADIUS + 26
+  const distance = RADIUS + 20
   return {
     x: CENTER + Math.cos(angle) * distance,
     y: CENTER + Math.sin(angle) * distance,
@@ -122,7 +122,7 @@ const labelPositions = computed(() => {
 <style scoped>
 .stat-radar {
   position: relative;
-  width: 180px;
+  width: 140px;
   max-width: 100%;
   margin-inline: auto;
 }
@@ -164,9 +164,9 @@ const labelPositions = computed(() => {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
 }
 
 .stat-radar__label {
@@ -179,8 +179,8 @@ const labelPositions = computed(() => {
 
 .stat-radar__label-value {
   display: block;
-  font-size: 0.9rem;
-  letter-spacing: 0.05em;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
   color: #fff;
 }
 

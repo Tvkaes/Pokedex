@@ -19,6 +19,7 @@ import type {
   PokemonSignatureMove,
   PokemonSpeciesData,
 } from '@/types/pokemon.types'
+import { generateCompetitiveMoveSets } from '@/services/competitiveMovesService'
 import { POKEMON_GENERATIONS } from '@pokedex/data/generations'
 import { buildItemSpriteUrl, getMegaStoneSlug } from '@pokedex/data/mega-stones'
 
@@ -76,6 +77,12 @@ const SPECIAL_VARIANT_KEYWORDS = [
 
 type MegaStoneAsset = { slug: string; sprite?: string | null }
 const megaStoneCache = new Map<string, MegaStoneAsset | undefined>()
+const pokemonDetailsCache = new Map<string, PokemonDetails>()
+const competitiveSetsCache = new Map<string, PokemonDisplayData['competitiveSets']>()
+
+function normalizeIdentifier(identifier: string | number): string {
+  return String(identifier).toLowerCase()
+}
 
 function classifyVariant(name: string): VariantClassification | null {
   const normalized = name.toLowerCase()
@@ -333,6 +340,12 @@ function extractAbilityDescription(details?: PokemonAbilityDetails | null): stri
 }
 
 export async function getPokemonDetails(identifier: string | number): Promise<PokemonDetails> {
+  const cacheKey = normalizeIdentifier(identifier)
+  const cached = pokemonDetailsCache.get(cacheKey)
+  if (cached) {
+    return cached
+  }
+
   const bundle = await fetchPokemonBundle(identifier)
   const primaryType = bundle.data.types?.[0]?.type?.name ?? 'normal'
   const featuredAbility = selectFeaturedAbility(bundle.data)
@@ -349,10 +362,38 @@ export async function getPokemonDetails(identifier: string | number): Promise<Po
 
   const display = mapDisplayData(bundle, featuredAbility ? { ...featuredAbility, description: abilityDescription } : featuredAbility)
 
-  return {
+  const details: PokemonDetails = {
     primaryType,
     raw: bundle.data,
     species: bundle.species,
     display,
+  }
+
+  pokemonDetailsCache.set(cacheKey, details)
+  return details
+}
+
+export async function prefetchPokemonDetails(identifier: string | number): Promise<void> {
+  try {
+    await getPokemonDetails(identifier)
+  } catch (error) {
+    console.warn(`Prefetch failed for Pokémon ${identifier}`, error)
+  }
+}
+
+export async function getPokemonCompetitiveMoveSets(identifier: string | number): Promise<PokemonDisplayData['competitiveSets']> {
+  const cacheKey = normalizeIdentifier(identifier)
+  if (competitiveSetsCache.has(cacheKey)) {
+    return competitiveSetsCache.get(cacheKey) ?? null
+  }
+
+  try {
+    const sets = await generateCompetitiveMoveSets(identifier)
+    competitiveSetsCache.set(cacheKey, sets)
+    return sets
+  } catch (error) {
+    console.warn(`Failed to build competitive move sets for ${identifier}`, error)
+    competitiveSetsCache.set(cacheKey, null)
+    return null
   }
 }

@@ -5,6 +5,7 @@ import PokemonTypeBadge from '@pokedex/components/shared/PokemonTypeBadge.vue'
 import PokemonGridMegaToggleButton from './PokemonGridMegaToggleButton.vue'
 import { useAlternateForms } from '@/composables/useAlternateForms'
 import FrostedCard from '@/components/base/FrostedCard.vue'
+import { prefetchPokemonDetails } from '@/services/pokemonService'
 
 const props = defineProps<{
   entry: PokemonGridEntry
@@ -49,6 +50,7 @@ const formStones = computed(() =>
 const hasMultipleStones = computed(() => formStones.value.length > 1)
 const pulseMode = ref<'mega' | 'base' | null>(null)
 let pulseTimeout: ReturnType<typeof setTimeout> | null = null
+const hasPrefetched = ref(false)
 const cryAudio = ref<HTMLAudioElement | null>(null)
 
 const displayName = computed(() => activeForm.value?.name ?? props.entry.name)
@@ -66,6 +68,13 @@ const stoneSprite = computed(() => activeStone.value?.sprite ?? null)
 function handleClick() {
   const targetId = activeForm.value?.id ?? props.entry.id
   emit('select', targetId)
+}
+
+function handlePrefetch() {
+  if (hasPrefetched.value) return
+  hasPrefetched.value = true
+  const targetId = activeForm.value?.id ?? props.entry.id
+  void prefetchPokemonDetails(targetId)
 }
 
 function handleMegaToggle(targetIndex?: number) {
@@ -140,6 +149,8 @@ function playCry() {
     as="button"
     class="group relative flex h-full w-full flex-col overflow-hidden rounded-[32px] border border-white/15 p-8 text-left text-white transition-transform duration-500 hover:-translate-y-2 focus-visible:-translate-y-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
     @click="handleClick"
+    @mouseenter="handlePrefetch"
+    @focus="handlePrefetch"
   >
     <div class="watermark watermark-label pointer-events-none select-none">
       {{ entry.nativeName || entry.name }}

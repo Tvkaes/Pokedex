@@ -4,6 +4,7 @@ import type {
   PokemonAbilityDetails,
   PokemonData,
   PokemonItemData,
+  PokemonMoveData,
   PokemonSpeciesData,
 } from '@/types/pokemon.types'
 
@@ -16,6 +17,7 @@ const pokemonCache = new Map<string, CacheEntry<PokemonData>>()
 const speciesCache = new Map<string, CacheEntry<PokemonSpeciesData>>()
 const itemCache = new Map<string, CacheEntry<PokemonItemData>>()
 const abilityCache = new Map<string, CacheEntry<PokemonAbilityDetails>>()
+const moveCache = new Map<string, CacheEntry<PokemonMoveData>>()
 
 /**
  * Determines whether a cached API response is still within the freshness window.
@@ -95,5 +97,29 @@ export async function fetchPokemonAbility(identifier: string): Promise<PokemonAb
 
   const data = await fetchWithRetry<PokemonAbilityDetails>(`${API_BASE_URL}/ability/${key}`)
   abilityCache.set(key, { data, timestamp: Date.now() })
+  return data
+}
+
+function resolveMoveEndpoint(identifier: string | number): { key: string; url: string } {
+  const raw = identifier.toString()
+  const normalized = raw.toLowerCase()
+  if (raw.startsWith('http')) {
+    return { key: raw, url: raw }
+  }
+  return {
+    key: normalized,
+    url: `${API_BASE_URL}/move/${normalized}`,
+  }
+}
+
+export async function fetchPokemonMove(identifier: string | number): Promise<PokemonMoveData> {
+  const { key, url } = resolveMoveEndpoint(identifier)
+  const cached = moveCache.get(key)
+  if (isFresh(cached)) {
+    return cached.data
+  }
+
+  const data = await fetchWithRetry<PokemonMoveData>(url)
+  moveCache.set(key, { data, timestamp: Date.now() })
   return data
 }

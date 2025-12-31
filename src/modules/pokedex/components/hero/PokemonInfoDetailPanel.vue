@@ -44,7 +44,12 @@ function handleFormSelect(index: number | null) {
   <div>
     <PokemonEntryDetails v-if="section === 'entry'" :pokemon="pokemon" />
 
-    <PokemonStatsPanel v-else-if="section === 'stats'" :stats="pokemon.stats" />
+    <PokemonStatsPanel
+      v-else-if="section === 'stats'"
+      :pokemon-id="pokemon.id"
+      :stats="pokemon.stats"
+      :competitive-sets="pokemon.competitiveSets"
+    />
 
     <PokemonAbilityCard v-else-if="section === 'ability'" :pokemon="pokemon" />
 

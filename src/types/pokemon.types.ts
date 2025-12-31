@@ -81,6 +81,58 @@ export interface PokemonMoveEntry {
   version_group_details: PokemonMoveVersionDetail[]
 }
 
+export interface PokemonMoveDamageClass {
+  name: string
+  url: string
+}
+
+export interface PokemonMoveEffectEntry {
+  effect: string
+  short_effect: string
+  language: {
+    name: string
+  }
+}
+
+export interface PokemonMoveMeta {
+  ailment?: {
+    name: string
+  }
+  category?: {
+    name: string
+  }
+  min_hits?: number | null
+  max_hits?: number | null
+  min_turns?: number | null
+  max_turns?: number | null
+  drain?: number | null
+  healing?: number | null
+  crit_rate?: number | null
+  ailment_chance?: number | null
+  flinch_chance?: number | null
+  stat_chance?: number | null
+}
+
+export interface PokemonMoveData {
+  id: number
+  name: string
+  accuracy: number | null
+  power: number | null
+  pp: number | null
+  priority: number
+  damage_class: PokemonMoveDamageClass
+  type: {
+    name: string
+    url: string
+  }
+  effect_entries: PokemonMoveEffectEntry[]
+  meta?: PokemonMoveMeta | null
+  target?: {
+    name: string
+    url: string
+  }
+}
+
 export interface PokemonData {
   id: number
   name: string
@@ -152,6 +204,7 @@ export interface PokemonDisplayData {
   cryUrl?: string
   hasMegaEvolution?: boolean
   alternateForms?: PokemonAlternateForm[]
+  competitiveSets?: CompetitiveMoveSets | null
 }
 
 export interface PokemonAlternateForm {
@@ -194,4 +247,18 @@ export interface PokemonItemData {
   sprites: {
     default?: string | null
   }
+}
+
+export interface CompetitiveMoveRecommendation {
+  name: string
+  type: string
+  roleTag: string
+  reason: string
+}
+
+export interface CompetitiveMoveSets {
+  sweeper: CompetitiveMoveRecommendation[]
+  wallbreaker: CompetitiveMoveRecommendation[]
+  tank: CompetitiveMoveRecommendation[]
+  support: CompetitiveMoveRecommendation[]
 }
