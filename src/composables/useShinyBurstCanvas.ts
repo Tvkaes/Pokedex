@@ -68,24 +68,37 @@ export function useShinyBurstCanvas(options: UseShinyBurstCanvasOptions) {
     burstAnimationFrame = null
   }
 
-  function disposeCanvas() {
+  function clearBurstCanvas() {
+    if (!burstCtx || !burstCanvasRef.value) return
+    burstCtx.clearRect(0, 0, burstCanvasRef.value.width, burstCanvasRef.value.height)
+  }
+
+  function resetBurst() {
     stopBurstAnimation()
-    burstCtx = null
     burstParticles = []
+    burstStartTime = 0
+    clearBurstCanvas()
+  }
+
+  function disposeCanvas() {
+    resetBurst()
+    burstCtx = null
   }
 
   function createBurstParticles(): CanvasParticle[] {
-    const count = reduceMotion.value ? 10 : 18
+    const count = reduceMotion.value ? 8 : 14
+    const baseDistance = reduceMotion.value ? 70 : 110
+    const distanceVariance = reduceMotion.value ? 30 : 60
     return Array.from({ length: count }, (_, index) => {
       const angle = (index / count) * Math.PI * 2 + (Math.random() * 0.4 - 0.2)
-      const distance = 140 + Math.random() * 180
+      const distance = baseDistance + Math.random() * distanceVariance
       return {
         angle,
         distance,
-        duration: 0.9 + Math.random() * 0.6,
+        duration: 0.7 + Math.random() * 0.4,
         delay: Math.random() * 0.12,
         color: randomBurstColor(),
-        size: 4.5 + Math.random() * 3.5,
+        size: 4 + Math.random() * 2.6,
         rotation: Math.random() * Math.PI * 2,
       }
     })
@@ -167,7 +180,7 @@ export function useShinyBurstCanvas(options: UseShinyBurstCanvasOptions) {
     stopBurstAnimation()
     burstParticles = createBurstParticles()
     burstStartTime = 0
-    burstCtx.clearRect(0, 0, burstCanvasRef.value.width, burstCanvasRef.value.height)
+    clearBurstCanvas()
     burstAnimationFrame = requestAnimationFrame(drawParticles)
   }
 
@@ -186,7 +199,7 @@ export function useShinyBurstCanvas(options: UseShinyBurstCanvasOptions) {
     visibilityListener = () => {
       documentVisible.value = document.visibilityState !== 'hidden'
       if (!documentVisible.value) {
-        stopBurstAnimation()
+        resetBurst()
       } else if (canAnimateBurst.value && burstParticles.length) {
         burstAnimationFrame = requestAnimationFrame(drawParticles)
       }
@@ -202,7 +215,7 @@ export function useShinyBurstCanvas(options: UseShinyBurstCanvasOptions) {
         const entry = entries[0]
         sectionVisible.value = entry?.isIntersecting ?? true
         if (!sectionVisible.value) {
-          stopBurstAnimation()
+          resetBurst()
         } else if (canAnimateBurst.value && burstParticles.length) {
           burstAnimationFrame = requestAnimationFrame(drawParticles)
         }
@@ -247,6 +260,8 @@ export function useShinyBurstCanvas(options: UseShinyBurstCanvasOptions) {
     (isShiny, prev) => {
       if (isShiny && !prev) {
         triggerStarBurst()
+      } else if (!isShiny && prev) {
+        resetBurst()
       }
     }
   )

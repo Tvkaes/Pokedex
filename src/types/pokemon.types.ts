@@ -61,6 +61,26 @@ export interface PokemonCries {
   legacy?: string | null
 }
 
+export interface PokemonMoveVersionDetail {
+  level_learned_at: number
+  move_learn_method: {
+    name: string
+    url: string
+  }
+  version_group: {
+    name: string
+    url: string
+  }
+}
+
+export interface PokemonMoveEntry {
+  move: {
+    name: string
+    url: string
+  }
+  version_group_details: PokemonMoveVersionDetail[]
+}
+
 export interface PokemonData {
   id: number
   name: string
@@ -71,6 +91,7 @@ export interface PokemonData {
   abilities: PokemonAbility[]
   types: PokemonType[]
   stats: PokemonStat[]
+  moves: PokemonMoveEntry[]
 }
 
 export interface PokemonSpeciesData {
@@ -101,6 +122,13 @@ export interface PokemonSpeciesData {
   }>
 }
 
+export interface PokemonSignatureMove {
+  name: string
+  level?: number
+  method?: string
+  versionGroup?: string
+}
+
 export interface PokemonDisplayData {
   id: number
   formattedId: string
@@ -116,6 +144,7 @@ export interface PokemonDisplayData {
   types: PokemonType[]
   abilities: PokemonAbility[]
   featuredAbility?: PokemonFeaturedAbility | null
+  signatureMoves?: PokemonSignatureMove[]
   height: number
   weight: number
   sprite: string

@@ -16,6 +16,7 @@ import type {
   PokemonDisplayData,
   PokemonFeaturedAbility,
   PokemonGridEntry,
+  PokemonSignatureMove,
   PokemonSpeciesData,
 } from '@/types/pokemon.types'
 import { POKEMON_GENERATIONS } from '@pokedex/data/generations'
@@ -192,15 +193,48 @@ async function extractAlternateForms(speciesData: PokemonSpeciesData): Promise<P
     })
   )
 
-  return forms
-    .filter((form): form is PokemonAlternateForm => form !== null)
-    .filter((form) => form.variantKind !== 'mega' && form.variantKind !== 'primal')
+  return forms.filter((form): form is PokemonAlternateForm => form !== null)
 }
 
 async function fetchPokemonBundle(identifier: string | number): Promise<PokemonBundle> {
   const [data, species] = await Promise.all([fetchPokemon(identifier), fetchPokemonSpecies(identifier)])
   const alternateForms = await extractAlternateForms(species)
   return { data, species, alternateForms }
+}
+
+function formatMoveLabel(name: string): string {
+  return name
+    .split('-')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ')
+}
+
+function selectSignatureMoves(data: PokemonData): PokemonSignatureMove[] {
+  if (!data.moves?.length) return []
+
+  const normalized = data.moves
+    .map((entry): PokemonSignatureMove => {
+      const primaryDetail =
+        entry.version_group_details?.find((detail) => detail.move_learn_method?.name === 'level-up') ??
+        entry.version_group_details?.[0]
+
+      if (!primaryDetail) {
+        return {
+          name: formatMoveLabel(entry.move.name),
+        }
+      }
+
+      return {
+        name: formatMoveLabel(entry.move.name),
+        level: primaryDetail.level_learned_at || undefined,
+        method: primaryDetail.move_learn_method?.name ?? undefined,
+        versionGroup: primaryDetail.version_group?.name ?? undefined,
+      }
+    })
+
+  return normalized
+    .sort((a, b) => (b.level ?? 0) - (a.level ?? 0))
+    .slice(0, 4)
 }
 
 function mapDisplayData(
@@ -219,6 +253,7 @@ function mapDisplayData(
     types: data.types,
     abilities: data.abilities,
     featuredAbility: featuredAbilityOverride ?? selectFeaturedAbility(data),
+    signatureMoves: selectSignatureMoves(data),
     height: data.height / 10,
     weight: data.weight / 10,
     sprite:
