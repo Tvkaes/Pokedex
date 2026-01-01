@@ -1,13 +1,25 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 const props = defineProps<{
-  active: 'hero' | 'grid'
+  active: 'hero' | 'grid' | 'search'
 }>()
 
 const emit = defineEmits<{
-  switch: ['hero' | 'grid']
+  switch: ['hero' | 'grid' | 'search']
 }>()
 
-function handleSelect(mode: 'hero' | 'grid') {
+const modes: Array<'hero' | 'grid' | 'search'> = ['hero', 'grid', 'search']
+const activeIndex = computed(() => {
+  const index = modes.indexOf(props.active)
+  return index >= 0 ? index : 0
+})
+
+const pillStyle = computed(() => ({
+  transform: `translateX(${activeIndex.value * 100}%)`,
+}))
+
+function handleSelect(mode: 'hero' | 'grid' | 'search') {
   if (mode === props.active) return
   emit('switch', mode)
 }
@@ -15,6 +27,7 @@ function handleSelect(mode: 'hero' | 'grid') {
 
 <template>
   <div class="view-toggle">
+    <span class="view-toggle__pill" :style="pillStyle" aria-hidden="true" />
     <button
       class="view-toggle__button"
       :class="[{ 'view-toggle__button--active': active === 'hero' }]"
@@ -49,19 +62,40 @@ function handleSelect(mode: 'hero' | 'grid') {
       </svg>
      
     </button>
+    <button class="view-toggle__button" :class="[{ 'view-toggle__button--active': active === 'search' }]" type="button" aria-label="Search view" @click="handleSelect('search')">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="6" />
+        <line x1="16" y1="16" x2="21" y2="21" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+    </button>
   </div>
 </template>
 
 <style scoped>
 .view-toggle {
   display: inline-flex;
-  gap: 0.35rem;
+  gap: 0;
   padding: 0.4rem;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   background: rgba(2, 6, 23, 0.1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+
+.view-toggle__pill {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  bottom: 0.4rem;
+  width: calc((100% - 0.8rem) / 3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 0;
 }
 
 .view-toggle__button {
@@ -78,6 +112,9 @@ function handleSelect(mode: 'hero' | 'grid') {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   transition: color 0.2s ease, background 0.2s ease;
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0%;
 }
 
 .view-toggle__button svg {
@@ -90,9 +127,7 @@ function handleSelect(mode: 'hero' | 'grid') {
 }
 
 .view-toggle__button--active {
-  background: white;
   color: #020617;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35);
 }
 
 .view-toggle__button--active svg {

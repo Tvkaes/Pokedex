@@ -3,10 +3,10 @@ import { ref } from 'vue'
 import { DEFAULT_GENERATION_ID } from '@pokedex/data/generations'
 
 export const usePokemonViewStore = defineStore('pokemon-view', () => {
-  const viewMode = ref<'hero' | 'grid'>('hero')
+  const viewMode = ref<'hero' | 'grid' | 'search'>('hero')
   const activeGeneration = ref<string>(DEFAULT_GENERATION_ID)
 
-  function setViewMode(mode: 'hero' | 'grid') {
+  function setViewMode(mode: 'hero' | 'grid' | 'search') {
     viewMode.value = mode
   }
 
