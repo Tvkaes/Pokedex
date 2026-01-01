@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import PokedexSearchBar from '@/components/pokemon/PokedexSearchBar.vue'
+import type { SearchSuggestion } from '@/types/search.types'
 
 const props = defineProps<{
   modelValue: string
   loading: boolean
   error?: string | null
-  suggestions?: string[]
+  suggestions?: SearchSuggestion[]
 }>()
 
 const emit = defineEmits<{
@@ -31,8 +32,6 @@ const emit = defineEmits<{
       @search="(query) => emit('search', query)"
       @random="emit('random')"
     />
-
-    <p v-if="props.error" class="search-panel__error">{{ props.error }}</p>
   </div>
 </template>
 

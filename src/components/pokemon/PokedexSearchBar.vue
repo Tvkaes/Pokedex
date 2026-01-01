@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { POPULAR_POKEMON } from '@/utils/constants'
+import type { SearchSuggestion } from '@/types/search.types'
 
 const props = withDefaults(
   defineProps<{
     modelValue?: string
     loading?: boolean
     placeholder?: string
-    suggestions?: string[]
+    suggestions?: SearchSuggestion[]
   }>(),
   {
     modelValue: '',
@@ -26,6 +27,74 @@ const emit = defineEmits<{
 const value = ref(props.modelValue)
 const isFocused = ref(false)
 const highlightedIndex = ref(0)
+const debouncedQuery = ref(value.value)
+let debounceTimeout: ReturnType<typeof setTimeout> | null = null
+
+const normalizedSuggestions = computed<SearchSuggestion[]>(() => {
+  if (!props.suggestions?.length) {
+    return POPULAR_POKEMON.map((name) => ({ name }))
+  }
+  return props.suggestions.map((entry) => (typeof entry === 'string' ? { name: entry } : entry))
+})
+
+function levenshtein(a: string, b: string) {
+  const matrix = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0))
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      )
+    }
+  }
+  return matrix[a.length][b.length]
+}
+
+function computeScore(name: string, query: string) {
+  const normalizedName = name.toLowerCase()
+  const normalizedQuery = query.toLowerCase()
+
+  if (normalizedName === normalizedQuery) return 0
+  if (normalizedName.startsWith(normalizedQuery)) return 1
+  if (normalizedName.includes(normalizedQuery)) return 2
+
+  const distance = levenshtein(normalizedName, normalizedQuery)
+  const tolerance = Math.max(1, Math.ceil(normalizedQuery.length / 3))
+  if (distance <= tolerance) {
+    return 3 + distance / 10
+  }
+  return Infinity
+}
+
+const rankedSuggestions = computed(() => {
+  const list = normalizedSuggestions.value
+  const query = debouncedQuery.value.trim()
+  if (!query) {
+    return list.slice(0, 8)
+  }
+
+  const scored = list
+    .map((entry) => ({
+      entry,
+      score: computeScore(entry.name, query),
+    }))
+    .filter((result) => Number.isFinite(result.score))
+    .sort((a, b) => {
+      if (a.score === b.score) {
+        return a.entry.name.localeCompare(b.entry.name)
+      }
+      return a.score - b.score
+    })
+
+  return scored.map((result) => result.entry).slice(0, 8)
+})
+
+const hasSuggestions = computed(() => rankedSuggestions.value.length > 0)
+const showSuggestions = computed(() => (isFocused.value || value.value.length > 0) && (hasSuggestions.value || !!debouncedQuery.value.trim()))
 
 watch(
   () => props.modelValue,
@@ -41,8 +110,17 @@ function handleInput(event: Event) {
   highlightedIndex.value = 0
 }
 
-function handleSearch() {
+function handleSearchFromInput() {
   const trimmed = value.value.trim()
+  if (!trimmed && rankedSuggestions.value.length) {
+    const suggestions = rankedSuggestions.value
+    const safeIndex = Math.min(Math.max(highlightedIndex.value, 0), suggestions.length - 1)
+    const fallback = suggestions[safeIndex] ?? suggestions[0]
+    if (fallback) {
+      handleSuggestionSelect(fallback)
+    }
+    return
+  }
   if (!trimmed) return
   emit('search', trimmed)
 }
@@ -51,21 +129,61 @@ function handleRandom() {
   emit('random')
 }
 
-function handleSuggestionSelect(name: string) {
+function handleSuggestionSelect(suggestion: SearchSuggestion | string | undefined) {
+  if (!suggestion) return
+  const name = typeof suggestion === 'string' ? suggestion : suggestion.name
   value.value = name
   emit('update:modelValue', name)
   emit('search', name)
 }
 
-const filteredSuggestions = computed(() => {
-  const baseSuggestions = props.suggestions?.length ? props.suggestions : POPULAR_POKEMON
-  if (!value.value.trim()) return baseSuggestions.slice(0, 8)
-  const query = value.value.trim().toLowerCase()
-  const matches = baseSuggestions.filter((entry) => entry.toLowerCase().includes(query))
-  return matches.slice(0, 8)
+function moveHighlight(delta: number) {
+  const count = rankedSuggestions.value.length
+  if (!count) return
+  highlightedIndex.value = (highlightedIndex.value + delta + count) % count
+}
+
+function handleKeyEnter(event: KeyboardEvent) {
+  event.preventDefault()
+  handleSearchFromInput()
+}
+
+function handleKeyArrowDown(event: KeyboardEvent) {
+  event.preventDefault()
+  moveHighlight(1)
+}
+
+function handleKeyArrowUp(event: KeyboardEvent) {
+  event.preventDefault()
+  moveHighlight(-1)
+}
+
+watch(
+  () => value.value,
+  (newValue) => {
+    if (debounceTimeout) clearTimeout(debounceTimeout)
+    debounceTimeout = setTimeout(() => {
+      debouncedQuery.value = newValue
+    }, 160)
+  },
+  { immediate: true }
+)
+
+watch(
+  () => rankedSuggestions.value.length,
+  (length) => {
+    if (highlightedIndex.value >= length) {
+      highlightedIndex.value = 0
+    }
+  }
+)
+
+onBeforeUnmount(() => {
+  if (debounceTimeout) {
+    clearTimeout(debounceTimeout)
+  }
 })
 
-const showSuggestions = computed(() => filteredSuggestions.value.length > 0 && (isFocused.value || value.value.length > 0))
 </script>
 
 <template>
@@ -87,7 +205,9 @@ const showSuggestions = computed(() => filteredSuggestions.value.length > 0 && (
         @input="handleInput"
         @focus="isFocused = true"
         @blur="isFocused = false"
-        @keydown.enter.prevent="handleSearch"
+        @keydown.enter="handleKeyEnter"
+        @keydown.arrow-down="handleKeyArrowDown"
+        @keydown.arrow-up="handleKeyArrowUp"
       />
       <button
         class="search-bar__button"
@@ -112,7 +232,7 @@ const showSuggestions = computed(() => filteredSuggestions.value.length > 0 && (
         type="button"
         aria-label="Search Pokédex"
         :disabled="loading"
-        @click="handleSearch"
+        @click="handleSearchFromInput"
       >
         <span v-if="loading" class="search-bar__spinner" aria-hidden="true" />
         <svg v-else viewBox="0 0 24 24" aria-hidden="true">
@@ -127,16 +247,22 @@ const showSuggestions = computed(() => filteredSuggestions.value.length > 0 && (
       </button>
     </div>
     <div v-if="showSuggestions" class="search-bar__suggestions">
-      <button
-        v-for="suggestion in filteredSuggestions"
-        :key="suggestion"
-        class="search-bar__suggestion"
-        type="button"
-        @mousedown.prevent
-        @click="handleSuggestionSelect(suggestion)"
-      >
-        {{ suggestion }}
-      </button>
+      <template v-if="hasSuggestions">
+        <button
+          v-for="(suggestion, index) in rankedSuggestions"
+          :key="suggestion.name"
+          class="search-bar__suggestion"
+          :class="{ 'search-bar__suggestion--active': index === highlightedIndex }"
+          type="button"
+          @mousedown.prevent
+          @mouseenter="highlightedIndex = index"
+          @click="handleSuggestionSelect(suggestion)"
+        >
+          <span class="search-bar__suggestion-name">{{ suggestion.name }}</span>
+          <span v-if="suggestion.formattedId" class="search-bar__suggestion-id">{{ suggestion.formattedId }}</span>
+        </button>
+      </template>
+      <p v-else class="search-bar__empty">No results found</p>
     </div>
   </div>
 </template>
@@ -260,6 +386,33 @@ const showSuggestions = computed(() => filteredSuggestions.value.length > 0 && (
 .search-bar__suggestion:hover {
   border-color: rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.12);
+}
+
+.search-bar__suggestion--active {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.search-bar__suggestion-name {
+  font-weight: 600;
+  letter-spacing: 0.15em;
+}
+
+.search-bar__suggestion-id {
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  margin-left: 0.6rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.search-bar__empty {
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0.4rem 0.9rem;
 }
 
 @keyframes spin {

@@ -74,6 +74,7 @@ export const usePokemonDataStore = defineStore('pokemon-data', () => {
     isLoading,
     isGenerationLoading,
     error,
+    generationEntries,
     loadPokemon,
     loadGenerationEntries,
     getGenerationEntries,

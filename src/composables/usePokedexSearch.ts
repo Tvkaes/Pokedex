@@ -2,6 +2,7 @@ import { computed, ref } from 'vue'
 import { usePokemonDataStore } from '@/stores/pokemonData'
 import { usePokemonViewStore } from '@/stores/pokemonView'
 import { POPULAR_POKEMON } from '@/utils/constants'
+import type { SearchSuggestion } from '@/types/search.types'
 
 export function usePokedexSearch() {
   const dataStore = usePokemonDataStore()
@@ -68,10 +69,16 @@ export function usePokedexSearch() {
   }
 
   const activeError = computed(() => errorMessage.value)
-  const suggestionPool = computed(() => {
+  const suggestionPool = computed<SearchSuggestion[]>(() => {
     const entries = dataStore.getGenerationEntries(viewStore.activeGeneration) ?? []
-    if (!entries.length) return POPULAR_POKEMON
-    return entries.map((entry) => entry.name)
+    if (!entries.length) {
+      return POPULAR_POKEMON.map((name) => ({ name }))
+    }
+    return entries.map((entry) => ({
+      id: entry.id,
+      name: entry.name,
+      formattedId: entry.formattedId,
+    }))
   })
 
   function dismissToast() {
