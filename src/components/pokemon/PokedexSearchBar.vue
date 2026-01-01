@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { POPULAR_POKEMON } from '@/utils/constants'
 
 const props = withDefaults(
   defineProps<{
     modelValue?: string
     loading?: boolean
     placeholder?: string
+    suggestions?: string[]
   }>(),
   {
     modelValue: '',
     loading: false,
     placeholder: 'Name or number...',
+    suggestions: () => [],
   }
 )
 
@@ -22,6 +25,7 @@ const emit = defineEmits<{
 
 const value = ref(props.modelValue)
 const isFocused = ref(false)
+const highlightedIndex = ref(0)
 
 watch(
   () => props.modelValue,
@@ -34,6 +38,7 @@ function handleInput(event: Event) {
   const target = event.target as HTMLInputElement
   value.value = target.value
   emit('update:modelValue', target.value)
+  highlightedIndex.value = 0
 }
 
 function handleSearch() {
@@ -45,67 +50,103 @@ function handleSearch() {
 function handleRandom() {
   emit('random')
 }
+
+function handleSuggestionSelect(name: string) {
+  value.value = name
+  emit('update:modelValue', name)
+  emit('search', name)
+}
+
+const filteredSuggestions = computed(() => {
+  const baseSuggestions = props.suggestions?.length ? props.suggestions : POPULAR_POKEMON
+  if (!value.value.trim()) return baseSuggestions.slice(0, 8)
+  const query = value.value.trim().toLowerCase()
+  const matches = baseSuggestions.filter((entry) => entry.toLowerCase().includes(query))
+  return matches.slice(0, 8)
+})
+
+const showSuggestions = computed(() => filteredSuggestions.value.length > 0 && (isFocused.value || value.value.length > 0))
 </script>
 
 <template>
   <label class="sr-only" for="pokedex-searchbar-input">Search Pokémon</label>
-  <div class="search-bar" :class="{ 'search-bar--loading': loading }">
-    <svg class="search-bar__icon" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="11" cy="11" r="6" />
-      <line x1="16" y1="16" x2="21" y2="21" stroke-width="1.5" stroke-linecap="round" />
-    </svg>
-    <input
-      id="pokedex-searchbar-input"
-      :value="value"
-      class="search-bar__input"
-      type="text"
-      :placeholder="placeholder"
-      :disabled="loading"
-      @input="handleInput"
-      @focus="isFocused = true"
-      @blur="isFocused = false"
-      @keydown.enter.prevent="handleSearch"
-    />
-    <button
-      class="search-bar__button"
-      type="button"
-      aria-label="Random Pokémon"
-      :disabled="loading"
-      @click="handleRandom"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          d="M4.5 7.5h4l2 3-2 3h-4m11-6h4l-2 3 2 3h-4m-4-6 3 6m-3 0L9 7.5"
-          fill="none"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
+  <div class="search-bar-wrapper">
+    <div class="search-bar" :class="{ 'search-bar--loading': loading }">
+      <svg class="search-bar__icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="6" />
+        <line x1="16" y1="16" x2="21" y2="21" stroke-width="1.5" stroke-linecap="round" />
       </svg>
-      <span class="sr-only">Random Pokémon</span>
-    </button>
-    <button
-      class="search-bar__button search-bar__button--primary"
-      type="button"
-      aria-label="Search Pokédex"
-      :disabled="loading"
-      @click="handleSearch"
-    >
-      <span v-if="loading" class="search-bar__spinner" aria-hidden="true" />
-      <svg v-else viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          d="M5 12h9m0 0-3-3m3 3-3 3m5-10h4v4"
-          fill="none"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-    </button>
+      <input
+        id="pokedex-searchbar-input"
+        :value="value"
+        class="search-bar__input"
+        type="text"
+        :placeholder="placeholder"
+        :disabled="loading"
+        autocomplete="off"
+        @input="handleInput"
+        @focus="isFocused = true"
+        @blur="isFocused = false"
+        @keydown.enter.prevent="handleSearch"
+      />
+      <button
+        class="search-bar__button"
+        type="button"
+        aria-label="Random Pokémon"
+        :disabled="loading"
+        @click="handleRandom"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M4.5 7.5h4l2 3-2 3h-4m11-6h4l-2 3 2 3h-4m-4-6 3 6m-3 0L9 7.5"
+            fill="none"
+            stroke-width="1.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span class="sr-only">Random Pokémon</span>
+      </button>
+      <button
+        class="search-bar__button search-bar__button--primary"
+        type="button"
+        aria-label="Search Pokédex"
+        :disabled="loading"
+        @click="handleSearch"
+      >
+        <span v-if="loading" class="search-bar__spinner" aria-hidden="true" />
+        <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M5 12h9m0 0-3-3m3 3-3 3m5-10h4v4"
+            fill="none"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+    <div v-if="showSuggestions" class="search-bar__suggestions">
+      <button
+        v-for="suggestion in filteredSuggestions"
+        :key="suggestion"
+        class="search-bar__suggestion"
+        type="button"
+        @mousedown.prevent
+        @click="handleSuggestionSelect(suggestion)"
+      >
+        {{ suggestion }}
+      </button>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.search-bar-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .search-bar {
   display: flex;
   align-items: center;
@@ -195,6 +236,30 @@ function handleRandom() {
   border-top-color: #020617;
   border-radius: 999px;
   animation: spin 0.8s linear infinite;
+}
+
+.search-bar__suggestions {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.search-bar__suggestion {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.75);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.search-bar__suggestion:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 @keyframes spin {

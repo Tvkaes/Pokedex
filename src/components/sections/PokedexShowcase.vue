@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { usePokemonDataStore } from '@/stores/pokemonData'
 import { usePokemonViewStore } from '@/stores/pokemonView'
 import PokemonHeroView from '@pokedex/components/hero/PokemonHeroView.vue'
@@ -11,8 +11,8 @@ import StripeAuraBackground from '@/components/backgrounds/StripeAuraBackground.
 import ScrollToTopButton from '@/components/ui/ScrollToTopButton.vue'
 import { useScrollTopButton } from '@/composables/useScrollTopButton'
 import { useHeroTheme } from '@/composables/useHeroTheme'
-import FrostedCard from '@/components/base/FrostedCard.vue'
-import PokedexSearchBar from '@/components/pokemon/PokedexSearchBar.vue'
+import PokedexSearchPanel from '@/components/pokemon/PokedexSearchPanel.vue'
+import { usePokedexSearch } from '@/composables/usePokedexSearch'
 
 const dataStore = usePokemonDataStore()
 const viewStore = usePokemonViewStore()
@@ -29,12 +29,11 @@ const {
 
 const isHeroView = computed(() => viewStore.viewMode === 'hero')
 const isGridView = computed(() => viewStore.viewMode === 'grid')
-const isSearchView = computed(() => viewStore.viewMode === 'search')
 const generationEntries = computed(() => dataStore.getGenerationEntries(viewStore.activeGeneration))
 
 const { showScrollTop, scrollToTop } = useScrollTopButton(isGridView)
-const searchValue = ref('')
-const isSearchLoading = computed(() => dataStore.isLoading && isSearchView.value)
+const { searchValue, isSearching, activeError, suggestionPool, toastMessage, performSearch, searchRandomPokemon, dismissToast } =
+  usePokedexSearch()
 
 function ensureInitialPokemon() {
   if (dataStore.pokemon) return Promise.resolve()
@@ -58,22 +57,6 @@ function handleSwitch(mode: 'hero' | 'grid' | 'search') {
 function handleGenerationSelect(id: string) {
   viewStore.setActiveGeneration(id)
   dataStore.loadGenerationEntries(id)
-}
-
-async function handleSearch(query?: string) {
-  const candidate = typeof query === 'string' ? query : searchValue.value
-  const trimmed = candidate.trim()
-  if (!trimmed) return
-  searchValue.value = trimmed
-  await dataStore.loadPokemon(trimmed.toLowerCase())
-  viewStore.setViewMode('hero')
-}
-
-async function handleRandomSearch() {
-  const randomId = Math.floor(Math.random() * 898) + 1
-  searchValue.value = ''
-  await dataStore.loadPokemon(randomId)
-  viewStore.setViewMode('hero')
 }
 
 watch(
@@ -101,6 +84,15 @@ onMounted(() => {
     <div class="absolute left-0 right-0 top-0 z-30 flex justify-end px-6 py-6">
       <PokedexViewToggle :active="viewStore.viewMode" @switch="handleSwitch" />
     </div>
+
+    <Teleport to="body">
+      <Transition name="toast-slide">
+        <div v-if="toastMessage" class="search-toast" role="status">
+          <span>{{ toastMessage }}</span>
+          <button type="button" aria-label="Dismiss" @click="dismissToast">✕</button>
+        </div>
+      </Transition>
+    </Teleport>
 
     <Transition name="view-fade" mode="out-in">
       <template v-if="isHeroView">
@@ -138,22 +130,13 @@ onMounted(() => {
         <div class="search-view__aura" aria-hidden="true" />
         <span class="search-view__kanji" aria-hidden="true">ポケモン図鑑</span>
         <div class="search-view__content">
-          <div
-            class="search-hero"
-            v-motion="{
-              initial: { opacity: 0, y: 20 },
-              enter: { opacity: 1, y: 0, transition: { duration: 0.45, delay: 0.05 } },
-            }"
-          >
-            <p class="search-hero__eyebrow">Pokédex</p>
-            <h2 class="search-hero__title">Instantly jump to any species in cinematic view.</h2>
-            <p class="search-hero__subtitle">Enter a name or National Dex number and we will take you right to the hero experience.</p>
-          </div>
-          <PokedexSearchBar
+          <PokedexSearchPanel
             v-model="searchValue"
-            :loading="isSearchLoading"
-            @search="handleSearch"
-            @random="handleRandomSearch"
+            :loading="isSearching"
+            :error="activeError ?? undefined"
+            :suggestions="suggestionPool"
+            @search="performSearch"
+            @random="searchRandomPokemon"
           />
         </div>
       </div>
@@ -238,6 +221,49 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.75);
   font-size: 1rem;
   max-width: 40rem;
+}
+
+.search-toast {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.2rem;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fee2e2;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-size: 0.65rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35);
+}
+
+.search-toast button {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) translateX(10px);
 }
 
 @keyframes pulseGlow {
