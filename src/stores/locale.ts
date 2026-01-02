@@ -4,13 +4,21 @@ import { translations, type Locale, type TranslationKey } from '@/locales/transl
 
 const STORAGE_KEY = 'pokedex-locale'
 
+function detectBrowserLocale(): Locale {
+  if (typeof window === 'undefined') return 'en'
+  const browserLang = navigator.language?.toLowerCase() ?? ''
+  if (browserLang.startsWith('es')) return 'es'
+  if (browserLang.startsWith('ja')) return 'ja'
+  return 'en'
+}
+
 function loadStoredLocale(): Locale {
   if (typeof window === 'undefined') return 'en'
   const stored = localStorage.getItem(STORAGE_KEY)
   if (stored === 'en' || stored === 'es' || stored === 'ja') {
     return stored
   }
-  return 'en'
+  return detectBrowserLocale()
 }
 
 export const useLocaleStore = defineStore('locale', () => {
