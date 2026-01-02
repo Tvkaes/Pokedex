@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { GenerationConfig } from '@/modules/pokedex/data/generations'
 import FrostedCard from '@/components/base/FrostedCard.vue'
+import HeadingBlock from '@/components/ui/HeadingBlock.vue'
 
 const props = defineProps<{
   generations: GenerationConfig[]
@@ -12,6 +14,13 @@ const emit = defineEmits<{
   select: [id: string]
 }>()
 
+const generationOptions = computed(() =>
+  props.generations.map((generation) => ({
+    id: generation.id,
+    label: generation.label,
+  }))
+)
+
 function handleSelect(id: string) {
   if (props.loading) return
   emit('select', id)
@@ -20,16 +29,18 @@ function handleSelect(id: string) {
 
 <template>
   <div class="mt-20 px-6 sm:px-10">
-    <FrostedCard as="div" class="mx-auto max-w-5xl rounded-[40px] border border-white/20 px-6 py-8 text-center">
-      <p class="text-xs uppercase tracking-[0.5em] text-white/60">Generations</p>
-      <h2 class="mt-2 text-3xl font-semibold tracking-tight">Explore the Eras of the Pokédex</h2>
-      <p class="mt-2 text-sm text-white/70">
-        Pick a region to load its full roster and browse every species.
-      </p>
-      <div class="mt-8 flex flex-wrap justify-center gap-3">
-        <template v-for="generation in generations" :key="generation.id">
+    <FrostedCard as="div" class="mx-auto max-w-5xl rounded-[40px] border border-white/20 px-6 py-8 text-center space-y-8">
+      <HeadingBlock
+        eyebrow="Generations"
+        title="Explore the Eras of the Pokédex"
+        subtitle="Pick a region to load its full roster and browse every species."
+        align="center"
+        size="lg"
+      />
+      <div class="flex flex-wrap justify-center gap-3">
+        <template v-for="generation in generationOptions" :key="generation.id">
           <button
-            class="rounded-full border px-5 py-2 text-xs uppercase tracking-[0.35em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            class="rounded-full border px-5 py-2 type-pill transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             :class="
               generation.id === activeId
                 ? 'border-white bg-white text-surface-900 shadow-lg shadow-white/30'

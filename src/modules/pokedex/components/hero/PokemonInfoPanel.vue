@@ -80,7 +80,7 @@ function handleSectionSelect(sectionId: PokemonInfoSectionId) {
     <div class="flex flex-wrap gap-2 sm:gap-3">
       <PokemonTypeBadge v-for="type in pokemon.types" :key="type.type.name" :label="type.type.name" />
     </div>
-    <div class="space-y-1 text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/90">
+    <div class="space-y-1 type-metric text-white/80">
       <p>
         Height ·
         <span class="font-mono tracking-normal">{{ imperialHeight }}</span>

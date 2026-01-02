@@ -3,9 +3,15 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  color: white;
-  background-color: #050816;
+  --font-family-base: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-family-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --type-letter-spacing-pill: 0.35em;
+  --type-letter-spacing-eyebrow: 0.45em;
+  --surface-background: #050816;
+  --surface-foreground: #f8fafc;
+  font-family: var(--font-family-base);
+  color: var(--surface-foreground);
+  background-color: var(--surface-background);
 }
 
 html, body, #app {
@@ -14,7 +20,11 @@ html, body, #app {
 }
 
 body {
-  background: #050816;
+  background: var(--surface-background);
+  font-family: var(--font-family-base);
+  color: var(--surface-foreground);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -35,4 +45,54 @@ a {
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.type-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: var(--type-letter-spacing-eyebrow);
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.type-pill {
+  font-size: 0.65rem;
+  letter-spacing: var(--type-letter-spacing-pill);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.type-muted {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.type-subtitle {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.type-metric {
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.type-caption {
+  font-size: 0.7rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.type-title-sm {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.type-title-lg {
+  font-size: clamp(2.4rem, 4vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }

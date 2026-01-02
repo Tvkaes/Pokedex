@@ -2,8 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { PokemonGridEntry } from '@/types/pokemon.types'
 import PokemonTypeBadge from '@pokedex/components/shared/PokemonTypeBadge.vue'
-import PokemonGridMegaToggleButton from './PokemonGridMegaToggleButton.vue'
-import PokemonGridDynamaxToggleButton from './PokemonGridDynamaxToggleButton.vue'
+import FormVariantToggle from '@/components/ui/FormVariantToggle.vue'
 import { useAlternateForms } from '@/composables/useAlternateForms'
 import FrostedCard from '@/components/base/FrostedCard.vue'
 import { prefetchPokemonDetails } from '@/services/pokemonService'
@@ -43,7 +42,6 @@ const alternateForms = computed(() => props.entry.alternateForms ?? [])
 const { activeForm, activeFormIndex, hasAlternateForms, toggleForm, resetForms } = useAlternateForms({
   forms: alternateForms,
 })
-const hasMegaForm = computed(() => props.entry.hasMegaEvolution && hasAlternateForms.value)
 const isMegaActive = computed(() => activeFormIndex.value !== null)
 const formEntries = computed(() => alternateForms.value.map((form, index) => ({ form, index })))
 const formStones = computed(() =>
@@ -167,23 +165,36 @@ function playCry() {
           class="flex items-center gap-2"
           :class="{ 'flex-wrap': hasMultipleStones }"
         >
-          <PokemonGridMegaToggleButton
+          <FormVariantToggle
             v-for="{ form, index } in formStones"
             :key="`${entry.id}-${index}`"
-            :is-visible="Boolean(form.stone?.sprite)"
-            :is-mega-active="isMegaActive && activeFormIndex === index"
-            :stone-sprite="form.stone?.sprite ?? undefined"
-            :display-name="form.name"
+            :visible="Boolean(form.stone?.sprite)"
+            :variant="(form.variantKind === 'primal' ? 'primal' : 'mega')"
+            :label="form.name"
+            :icon="form.stone?.sprite ?? null"
+            :active="activeFormIndex === index"
             @toggle="() => handleFormToggle(index)"
-          />
-          <PokemonGridDynamaxToggleButton
+          >
+            <template #sr>
+              {{ activeFormIndex === index ? `Return ${form.name} to base form` : `Activate ${form.name}` }}
+            </template>
+          </FormVariantToggle>
+          <FormVariantToggle
             v-for="{ form, index } in dynamaxEntries"
             :key="`${entry.id}-dynamax-${index}`"
-            :is-visible="true"
-            :is-active="activeFormIndex === index"
-            :display-name="form.name"
+            variant="dynamax"
+            :label="form.name"
+            :active="activeFormIndex === index"
             @toggle="() => handleFormToggle(index)"
-          />
+          >
+            <template #sr>
+              {{
+                activeFormIndex === index
+                  ? `Return from Dynamax form ${form.name}`
+                  : `Activate Dynamax form ${form.name}`
+              }}
+            </template>
+          </FormVariantToggle>
         </div>
         <PokemonTypeBadge :label="displayType" />
       </div>

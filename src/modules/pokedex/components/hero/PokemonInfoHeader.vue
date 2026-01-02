@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import PokemonGridMegaToggleButton from '@pokedex/components/grid/PokemonGridMegaToggleButton.vue'
-import PokemonGridDynamaxToggleButton from '@pokedex/components/grid/PokemonGridDynamaxToggleButton.vue'
+import FormVariantToggle from '@/components/ui/FormVariantToggle.vue'
 import type { PokemonDisplayData, PokemonFormEntry } from '@/types/pokemon.types'
 
 const props = defineProps<{
@@ -37,34 +36,51 @@ function handleMegaToggle(index: number) {
 
 <template>
   <div class="space-y-1 sm:space-y-3">
-    <p class="text-xs sm:text-sm uppercase tracking-[0.4em] sm:tracking-[0.5em] text-white/80">
+    <p class="type-pill text-white/70">
       #{{ pokemon.id.toString().padStart(3, '0') }}
     </p>
     <div class="flex flex-wrap items-center gap-3">
-      <h1 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-display font-semibold leading-tight">
+      <h1 class="type-title-lg font-display leading-tight text-white">
         {{ pokemon.name }}
       </h1>
       <div v-if="hasMegaEvolution && specialFormEntries.length" class="flex flex-wrap items-center gap-2">
         <div v-if="megaFormEntries.length" class="flex flex-wrap items-center gap-2">
-          <PokemonGridMegaToggleButton
+          <FormVariantToggle
             v-for="entry in megaFormEntries"
             :key="entry.form.id"
-            :is-visible="Boolean(entry.form.stone?.sprite)"
-            :is-mega-active="activeMegaFormIndex === entry.index"
-            :stone-sprite="entry.form.stone?.sprite ?? undefined"
-            :display-name="entry.form.name"
+            :visible="Boolean(entry.form.stone?.sprite)"
+            :variant="entry.form.variantKind === 'primal' ? 'primal' : 'mega'"
+            :label="entry.form.name"
+            :icon="entry.form.stone?.sprite ?? null"
+            :active="activeMegaFormIndex === entry.index"
             @toggle="() => handleMegaToggle(entry.index)"
-          />
+          >
+            <template #sr>
+              {{
+                activeMegaFormIndex === entry.index
+                  ? `Return ${entry.form.name} to base form`
+                  : `Activate ${entry.form.name}`
+              }}
+            </template>
+          </FormVariantToggle>
         </div>
         <div v-if="dynamaxFormEntries.length" class="flex flex-wrap items-center gap-2">
-          <PokemonGridDynamaxToggleButton
+          <FormVariantToggle
             v-for="entry in dynamaxFormEntries"
             :key="entry.form.id"
-            :is-visible="true"
-            :is-active="activeMegaFormIndex === entry.index"
-            :display-name="entry.form.name"
+            variant="dynamax"
+            :label="entry.form.name"
+            :active="activeMegaFormIndex === entry.index"
             @toggle="() => handleMegaToggle(entry.index)"
-          />
+          >
+            <template #sr>
+              {{
+                activeMegaFormIndex === entry.index
+                  ? `Return from Dynamax form ${entry.form.name}`
+                  : `Activate Dynamax form ${entry.form.name}`
+              }}
+            </template>
+          </FormVariantToggle>
         </div>
       </div>
     </div>
