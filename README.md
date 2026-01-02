@@ -147,6 +147,7 @@ This split is powered by:
 - **Cry + media parity:** Grid interactions reuse the same cry handling as the hero card, so audio feedback is consistent across views.
 - **Dynamax-ready hero & grid:** Special form buttons now include a dedicated Dynamax/Gigantamax icon so giant forms sit alongside Mega and Primal states both in the hero header and grid cards.
 - **Split alternate-form arrays:** Alternate forms are classified into `specialFormEntries` (Mega/Primal/Dynamax) and `regionalFormEntries`, letting the header focus on battle-triggered forms while the Forms tab restores regionals and other cosmetics.
+- **Matchups intelligence:** Compact frosted cards surface top defensive weaknesses and offensive strengths with multipliers and coverage sources for every type combo.
 
 ---
 
