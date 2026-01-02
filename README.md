@@ -6,6 +6,14 @@
 
 ---
 
+## 🌐 Live Demo
+
+- **Production:** https://pokedex-ruby-kappa.vercel.app  
+- **Status:** Vercel build kept in sync with the `main` branch
+- **Compatibility:** Desktop (≥1280px) recommended; mobile verified on iPhone 12 / Pixel 6
+
+---
+
 ## 🌟 Project Vision
 
 Pokedex V1 is a design-forward Vue 3 experience that reimagines traditional Pokédex browsing.  
@@ -36,7 +44,7 @@ It delivers **immersive presentation**, **frictionless interactions**, and **acc
 
 ---
 
-## 🧩 Project Structure
+## 🧩 Project Structure & Data Flow
 
 ```
 src/
@@ -49,6 +57,7 @@ src/
 │       │   ├── filters/       # Generation filters and selectors
 │       │   └── shared/        # Type badges and reusable atoms
 │       ├── data/              # Generation metadata + mega stone mapping
+│       ├── styles/            # Gradient layers + glassmorphism tokens
 │       └── ...additional module assets
 ├── composables/
 │   ├── usePokemonMedia.ts      # Sprite motion, shiny toggles, cry playback
@@ -65,6 +74,27 @@ src/
     └── typeColors.ts           # Color palettes per Pokémon type
 ```
 
+**Main flow**
+
+1. `pokemonService` uses `utils/api.ts` (ofetch + in-memory cache) to retrieve `pokemon`, `species`, `items`, and `evolution-chain`.
+2. Normalized data flows into the `stores/pokemon.ts` store, which maintains navigation windows and caches all eight generations (1,010 entries).
+3. Components in `modules/pokedex` consume the store via composables (`usePokemonMedia`, `usePokemonNavigation`) to keep hero, grid, and forms in sync.
+4. Tailwind + VueUse Motion render the visual effects, while DaisyUI provides baseline tokens for the interactive controls.
+
+This pipeline ensures the UI hits PokéAPI only once per Pokémon, reuses cache when switching generations, and keeps interactions smooth for everything from Kanto through Galar.
+
+---
+
+## 🧾 Dataset Coverage & API Strategy
+
+- **Generations:** Full coverage from 1 through 8 (National Dex #001–#1010).
+- **Key endpoints:** `/pokemon`, `/pokemon-species`, `/evolution-chain`, `/item` (mega stones), `/type`.
+- **Gender differences:** Uses `front_female` sprites when available; otherwise falls back to PokéAPI’s shared official artwork.
+- **Special forms:** Mega, Primal, Dynamax, and Gigantamax detected via `pokemonService.classifyVariant`.
+- **Rate limiting:** `utils/api.ts` caches responses and throttles to six concurrent requests to respect PokéAPI limits.
+
+> Known constraint: PokéAPI does not expose gender-specific official artwork; the hero info panel documents this limitation.
+
 ---
 
 ## 📸 Highlights
@@ -77,6 +107,15 @@ src/
 - **Multi-stone UX** – Pokémon with more than one mega evolution display a responsive row of stones so each form is one click away.
 - **Competitive insights** – Hero details include a stat radar, recommended move categories, and quick ability summaries for instant team-building context.
 - **Forms tab parity** – Regional and cosmetic variants render as cards with variant kind/region context while keeping the base form action one tap away.
+- **Full dex navigation** – Generation buttons, keyboard shortcuts (`←/→`), and virtualized scrolling let you browse all 1,010 Pokémon without blocking the UI.
+
+---
+
+## 🎭 Use Cases
+
+1. **Casual fan:** Enjoys the cinematic Pokédex with shadows, auras, and shiny toggles.
+2. **Competitive trainer:** Checks base stats, abilities, and special forms before finalizing a team.
+3. **Collector:** Switches regional variants to compare typing, palette, and narrative context.
 
 ---
 
@@ -124,6 +163,14 @@ pnpm build
 
 ---
 
+## 🚀 Deployment Notes
+
+- **Node:** 20.19 LTS (or higher per `"engines"`).
+- **Environment vars:** No `.env` required; PokéAPI consumption is public. For multi-origin deployments, optionally override `VITE_POKEAPI_BASE`.
+- **Build:** `pnpm build` emits `dist/` artifacts ready for Vercel/Netlify. Set `NODE_ENV=production` to enable Vue’s optimizations.
+
+---
+
 ## 🗺️ Roadmap Ideas
 
 1. Favorites / recently viewed panel with local persistence  
@@ -131,6 +178,15 @@ pnpm build
 3. Extended accessibility (screen-reader labels, keyboard shortcuts)  
 4. Multi-language support (EN / ES / JP copy toggles)  
 5. Offline caching using IndexedDB for instant reloads  
+
+---
+
+## ⚠️ Known Limitations & Next Steps
+
+- **Testing:** No unit/e2e coverage yet. Next step: `vitest` + `playwright` for stores and navigation.
+- **Accessibility:** Mega/shiny toggles still need full screen-reader support; plan is to add `aria-pressed`, focus states, and extra shortcuts.
+- **Official assets:** PokéAPI lacks gender-specific official artwork; the UI documents this gap and shows fallbacks.
+- **Localization:** UI is English-only; i18n (EN/ES/JP) is on deck once copy stabilizes.
 
 ---
 
