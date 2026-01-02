@@ -108,6 +108,7 @@ This pipeline ensures the UI hits PokéAPI only once per Pokémon, reuses cache 
 - **Competitive insights** – Hero details include a stat radar, recommended move categories, and quick ability summaries for instant team-building context.
 - **Forms tab parity** – Regional and cosmetic variants render as cards with variant kind/region context while keeping the base form action one tap away.
 - **Full dex navigation** – Generation buttons, keyboard shortcuts (`←/→`), and virtualized scrolling let you browse all 1,010 Pokémon without blocking the UI.
+- **Matchups intelligence** – New Matchups tab surfaces top five weaknesses and offensive strengths based on live type chart calculations.
 
 ---
 
@@ -127,6 +128,7 @@ The Pokédex now classifies every non-default form into two explicit buckets so 
 |--------|--------|-------------|-------|
 | `specialFormEntries` | Mega, Primal, Dynamax & Gigantamax | `PokemonInfoHeader`, `PokemonGridCard`, `PokemonGridMegaToggleButton`, `PokemonGridDynamaxToggleButton` | Buttons render official mega stone sprites or the custom `dynamax.svg` glyph and reuse cry + sprite motion logic via `usePokemonMedia`. |
 | `regionalFormEntries` | Regional names (Alola, Hisui, Galar, etc.) + other special keywords | `PokemonInfoDetailPanel`, `PokemonFormsList`, `PokemonFormVariantCard` | Cards keep the base form accessible, hide the active mega index, and show dual-type badges per variant. |
+| `typeMatchups` (computed) | Type chart multipliers per Pokémon type combo | `PokemonMatchupPanel` | Displays top 5 weaknesses and strengths by combining defensive multipliers and offensive coverage sources. |
 
 This split is powered by:
 

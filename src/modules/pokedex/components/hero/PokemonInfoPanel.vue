@@ -39,6 +39,7 @@ const sectionOptions = computed<SectionOption[]>(() => {
     { id: 'entry', label: 'Entry' },
     { id: 'stats', label: 'Stats' },
     { id: 'ability', label: 'Ability' },
+    { id: 'matchups', label: 'Matchups' },
   ]
 
   const hasForms = hasAlternateForms.value
@@ -61,7 +62,8 @@ watch(
 )
 
 function handleSectionSelect(sectionId: PokemonInfoSectionId) {
-  if (sectionId === 'entry' || sectionId === 'stats' || sectionId === 'ability' || sectionId === 'forms') {
+  const allowed: PokemonInfoSectionId[] = ['entry', 'stats', 'ability', 'forms', 'matchups']
+  if (allowed.includes(sectionId)) {
     activeSection.value = sectionId
   }
 }

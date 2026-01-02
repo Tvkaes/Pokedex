@@ -4,6 +4,17 @@ export type TypeChartEntry = {
   immuneTo: string[]
 }
 
+export type TypeMatchup = {
+  type: string
+  multiplier: number
+}
+
+export type OffensiveCoverageEntry = {
+  type: string
+  sources: string[]
+  multiplier: number
+}
+
 export const TYPE_CHART: Record<string, TypeChartEntry> = {
   normal: { strongAgainst: [], weakAgainst: ['rock', 'steel'], immuneTo: ['ghost'] },
   fire: { strongAgainst: ['grass', 'ice', 'bug', 'steel'], weakAgainst: ['fire', 'water', 'rock', 'dragon'], immuneTo: [] },
@@ -62,6 +73,85 @@ export function getTypeWeaknesses(pokemonTypes: string[]): string[] {
   return Object.entries(multipliers)
     .filter(([, value]) => value > 1)
     .map(([type]) => type)
+}
+
+function calculateTypeMultipliers(pokemonTypes: string[]) {
+  const multipliers: Record<string, number> = {}
+
+  for (const attackingType of Object.keys(TYPE_CHART)) {
+    let modifier = 1
+    for (const rawDefType of pokemonTypes) {
+      const defType = rawDefType.toLowerCase()
+      const chart = TYPE_CHART[attackingType]
+      if (!chart) continue
+
+      if (chart.strongAgainst.includes(defType)) {
+        modifier *= 2
+      } else if (chart.weakAgainst.includes(defType)) {
+        modifier *= 0.5
+      } else if (chart.immuneTo.includes(defType)) {
+        modifier = 0
+        break
+      }
+    }
+    multipliers[attackingType] = modifier
+  }
+
+  return multipliers
+}
+
+export function getTypeMatchups(pokemonTypes: string[]) {
+  const normalizedTypes = pokemonTypes.map((type) => type.toLowerCase())
+  const multipliers = calculateTypeMultipliers(normalizedTypes)
+
+  const entries: TypeMatchup[] = Object.entries(multipliers).map(([type, multiplier]) => ({
+    type,
+    multiplier,
+  }))
+
+  const weaknesses = entries
+    .filter(({ multiplier }) => multiplier > 1)
+    .sort((a, b) => b.multiplier - a.multiplier)
+  const resistances = entries
+    .filter(({ multiplier }) => multiplier > 0 && multiplier < 1)
+    .sort((a, b) => a.multiplier - b.multiplier)
+  const immunities = entries.filter(({ multiplier }) => multiplier === 0)
+
+  return {
+    weaknesses,
+    resistances,
+    immunities,
+  }
+}
+
+export function getOffensiveCoverage(pokemonTypes: string[]) {
+  const normalizedTypes = pokemonTypes.map((type) => type.toLowerCase())
+  const coverage: Record<string, Set<string>> = {}
+
+  for (const type of normalizedTypes) {
+    const entry = TYPE_CHART[type]
+    if (!entry) continue
+
+    for (const target of entry.strongAgainst) {
+      if (!coverage[target]) {
+        coverage[target] = new Set()
+      }
+      coverage[target].add(type)
+    }
+  }
+
+  return Object.entries(coverage)
+    .map(([type, sources]) => ({
+      type,
+      sources: Array.from(sources),
+      multiplier: 2,
+    }))
+    .sort((a, b) => {
+      if (b.sources.length === a.sources.length) {
+        return a.type.localeCompare(b.type)
+      }
+      return b.sources.length - a.sources.length
+    })
 }
 
 export function getCoverageTargets(attackType: string): string[] {

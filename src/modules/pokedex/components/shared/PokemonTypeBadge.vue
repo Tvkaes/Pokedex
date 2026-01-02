@@ -36,7 +36,7 @@ const badgeStyle = computed(() => {
   border: 1px solid rgba(255, 255, 255, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.3em;
-  font-size: 0.75rem;
+  font-size: 0.55rem;
   font-weight: 600;
   color: #fff;
   transition: transform 0.2s ease, box-shadow 0.2s ease;

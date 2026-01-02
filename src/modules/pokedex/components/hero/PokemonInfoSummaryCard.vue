@@ -20,7 +20,7 @@ const emit = defineEmits<{
 }>()
 
 const buttonClasses = computed(() => ({
-  base: 'rounded-full px-4 py-1.5 text-xs tracking-[0.25em] uppercase transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
+  base: 'rounded-full px-4 py-1.5 text-[0.65rem] tracking-[0.25em] uppercase transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
   active: 'bg-white text-surface-900 shadow shadow-white/40',
   disabled: 'bg-white/5 text-white/40 cursor-not-allowed',
   idle: 'bg-white/10 text-white/80 hover:bg-white/20',

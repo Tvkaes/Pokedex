@@ -6,6 +6,7 @@ import PokemonEntryDetails from './PokemonEntryDetails.vue'
 import PokemonStatsPanel from './PokemonStatsPanel.vue'
 import PokemonAbilityCard from './PokemonAbilityCard.vue'
 import PokemonFormsList from './PokemonFormsList.vue'
+import PokemonMatchupPanel from './PokemonMatchupPanel.vue'
 
 type FormEntry = {
   form: PokemonAlternateForm
@@ -59,6 +60,8 @@ function handleFormSelect(index: number | null) {
       :visible-form-entries="visibleFormEntries"
       @select="handleFormSelect"
     />
+
+    <PokemonMatchupPanel v-else-if="section === 'matchups'" :types="pokemon.types" />
   </div>
 </template>
 

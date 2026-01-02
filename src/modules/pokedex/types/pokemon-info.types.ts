@@ -1,1 +1,1 @@
-export type PokemonInfoSectionId = 'entry' | 'stats' | 'ability' | 'forms'
+export type PokemonInfoSectionId = 'entry' | 'stats' | 'ability' | 'forms' | 'matchups'
