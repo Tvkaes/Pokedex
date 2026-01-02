@@ -179,7 +179,7 @@ pnpm build
 1. Favorites / recently viewed panel with local persistence  
 2. Type filters and predictive search suggestions  
 3. Extended accessibility (screen-reader labels, keyboard shortcuts)  
-4. Multi-language support (EN / ES / JP copy toggles)  
+4. ~~Multi-language support (EN / ES / JP copy toggles)~~ ✅ Implemented  
 5. Offline caching using IndexedDB for instant reloads  
 
 ---
@@ -189,7 +189,7 @@ pnpm build
 - **Testing:** No unit/e2e coverage yet. Next step: `vitest` + `playwright` for stores and navigation.
 - **Accessibility:** Mega/shiny toggles still need full screen-reader support; plan is to add `aria-pressed`, focus states, and extra shortcuts.
 - **Official assets:** PokéAPI lacks gender-specific official artwork; the UI documents this gap and shows fallbacks.
-- **Localization:** UI is English-only; i18n (EN/ES/JP) is on deck once copy stabilizes.
+- **Localization:** Multi-language support (EN/ES/JP) is now available via a locale toggle in the header. Translations cover hero panel labels, matchups, and section tabs.
 
 ---
 

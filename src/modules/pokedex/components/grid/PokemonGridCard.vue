@@ -66,7 +66,12 @@ const hasPrefetched = ref(false)
 const cryAudio = ref<HTMLAudioElement | null>(null)
 
 const displayName = computed(() => activeForm.value?.name ?? props.entry.name)
-const displaySprite = computed(() => activeForm.value?.spriteShiny ?? activeForm.value?.sprite ?? props.entry.sprite)
+const displaySprite = computed(() => {
+  if (activeForm.value) {
+    return activeForm.value.sprite || activeForm.value.spriteShiny || props.entry.sprite
+  }
+  return props.entry.sprite
+})
 const displayType = computed(() => activeForm.value?.primaryType ?? props.entry.primaryType)
 const displayFormattedId = computed(() => activeForm.value?.formattedId ?? props.entry.formattedId)
 

@@ -14,6 +14,7 @@ import { useHeroTheme } from '@/composables/useHeroTheme'
 import PokedexSearchPanel from '@/components/pokemon/PokedexSearchPanel.vue'
 import { usePokedexSearch } from '@/composables/usePokedexSearch'
 
+
 const dataStore = usePokemonDataStore()
 const viewStore = usePokemonViewStore()
 
@@ -81,8 +82,9 @@ onMounted(() => {
   >
     <StripeAuraBackground :primary-color="heroColor.color" :secondary-color="secondaryHeroColor.color" />
 
-    <div class="absolute left-0 right-0 top-0 z-30 flex justify-end px-6 py-6">
+    <div class="absolute left-0 right-0 top-0 z-30 flex items-center justify-end gap-4 px-6 py-6">
       <PokedexViewToggle :active="viewStore.viewMode" @switch="handleSwitch" />
+   
     </div>
 
     <Teleport to="body">

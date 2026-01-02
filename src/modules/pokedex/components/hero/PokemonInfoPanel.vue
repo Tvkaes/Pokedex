@@ -6,6 +6,7 @@ import PokemonInfoHeader from './PokemonInfoHeader.vue'
 import PokemonInfoSummaryCard from './PokemonInfoSummaryCard.vue'
 import PokemonInfoDetailPanel from './PokemonInfoDetailPanel.vue'
 import type { PokemonInfoSectionId } from '@pokedex/types/pokemon-info.types'
+import { useTranslation } from '@/composables/useTranslation'
 
 const props = defineProps<{
   pokemon: PokemonDisplayData
@@ -26,6 +27,8 @@ function handleMegaSelect(index: number | null) {
   emit('selectMegaForm', index)
 }
 
+const { t } = useTranslation()
+
 interface SectionOption {
   id: PokemonInfoSectionId
   label: string
@@ -36,16 +39,16 @@ const hasAlternateForms = computed(() => props.regionalFormEntries.length > 0)
 
 const sectionOptions = computed<SectionOption[]>(() => {
   const sections: SectionOption[] = [
-    { id: 'entry', label: 'Entry' },
-    { id: 'stats', label: 'Stats' },
-    { id: 'ability', label: 'Ability' },
-    { id: 'matchups', label: 'Matchups' },
+    { id: 'entry', label: t('section.entry') },
+    { id: 'stats', label: t('section.stats') },
+    { id: 'ability', label: t('section.ability') },
+    { id: 'matchups', label: t('section.matchups') },
   ]
 
   const hasForms = hasAlternateForms.value
   sections.push({
     id: 'forms',
-    label: 'Forms',
+    label: t('section.forms'),
     disabled: !hasForms,
   })
 
@@ -84,11 +87,11 @@ function handleSectionSelect(sectionId: PokemonInfoSectionId) {
     </div>
     <div class="space-y-1 type-metric text-white/80">
       <p>
-        Height ·
+        {{ t('height') }} ·
         <span class="font-mono tracking-normal">{{ imperialHeight }}</span>
       </p>
       <p>
-        Weight ·
+        {{ t('weight') }} ·
         <span class="font-mono tracking-normal">{{ imperialWeight }}</span>
       </p>
     </div>

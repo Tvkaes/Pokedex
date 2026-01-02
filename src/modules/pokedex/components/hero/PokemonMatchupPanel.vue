@@ -3,6 +3,9 @@ import { computed } from 'vue'
 import { getOffensiveCoverage, getTypeMatchups } from '@/data/type-chart'
 import type { PokemonType } from '@/types/pokemon.types'
 import PokemonMatchupCard from './PokemonMatchupCard.vue'
+import { useTranslation } from '@/composables/useTranslation'
+
+const { t } = useTranslation()
 
 const props = defineProps<{
   types: PokemonType[]
@@ -42,16 +45,16 @@ const strengthEntries = computed(() =>
 <template>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <PokemonMatchupCard
-      kicker="Damage taken"
-      title="Weak to"
+      :kicker="t('matchups.damageTaken')"
+      :title="t('matchups.weakTo')"
       :entries="weaknessEntries"
-      empty-message="No notable weaknesses detected."
+      :empty-message="t('matchups.noWeaknesses')"
     />
     <PokemonMatchupCard
-      kicker="Damage dealt"
-      title="Strong against"
+      :kicker="t('matchups.damageDealt')"
+      :title="t('matchups.strongAgainst')"
       :entries="strengthEntries"
-      empty-message="No offensive coverage detected."
+      :empty-message="t('matchups.noStrengths')"
     />
   </div>
 </template>

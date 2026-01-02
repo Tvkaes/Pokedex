@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import LocaleToggle from '@/components/ui/LocaleToggle.vue'
 
 const props = defineProps<{
   active: 'hero' | 'grid' | 'search'
@@ -68,6 +69,8 @@ function handleSelect(mode: 'hero' | 'grid' | 'search') {
         <line x1="16" y1="16" x2="21" y2="21" stroke-width="1.5" stroke-linecap="round" />
       </svg>
     </button>
+
+    <LocaleToggle />
   </div>
 </template>
 
@@ -82,7 +85,7 @@ function handleSelect(mode: 'hero' | 'grid' | 'search') {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .view-toggle__pill {
@@ -90,7 +93,7 @@ function handleSelect(mode: 'hero' | 'grid' | 'search') {
   top: 0.4rem;
   left: 0.4rem;
   bottom: 0.4rem;
-  width: calc((100% - 0.8rem) / 3);
+  width: calc((100% - 0.8rem) / 4);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35);
