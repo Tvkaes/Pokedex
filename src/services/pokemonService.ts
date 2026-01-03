@@ -265,7 +265,7 @@ function mapDisplayData(
     id: data.id,
     formattedId: formatPokemonId(data.id),
     name: extractLocalizedDisplayName(data, species, locale),
-    nativeName: extractNativeName(species, locale),
+    nativeName: extractNativeName(species, 'ja'),
     description: extractDescription(species, locale),
     genus: extractGenus(species, locale),
     stats: mapStats(data),
