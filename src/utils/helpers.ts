@@ -4,6 +4,7 @@ import type {
   PokemonFeaturedAbility,
   PokemonSpeciesData,
 } from '@/types/pokemon.types'
+import type { Locale } from '@/locales/translations'
 import { STAT_LABELS } from './constants'
 
 /**
@@ -21,32 +22,70 @@ export function formatPokemonId(id: number): string {
   return `#${String(id).padStart(3, '0')}`
 }
 
+const LANGUAGE_PREFERENCE: Record<Locale, string[]> = {
+  en: ['en'],
+  es: ['es', 'es-la'],
+  ja: ['ja-Hrkt', 'ja'],
+}
+
+function buildLanguagePriority(locale: Locale): string[] {
+  const primary = LANGUAGE_PREFERENCE[locale] ?? LANGUAGE_PREFERENCE.en
+  const fallback = LANGUAGE_PREFERENCE.en
+  const merged = [...primary, ...fallback]
+  return Array.from(new Set(merged))
+}
+
+function findByLanguage<T extends { language?: { name?: string } }>(entries: T[] | undefined, locale: Locale): T | undefined {
+  if (!entries?.length) return undefined
+  const priorityOrder = buildLanguagePriority(locale)
+  for (const code of priorityOrder) {
+    const match = entries.find((item) => item.language?.name === code)
+    if (match) {
+      return match
+    }
+  }
+  return undefined
+}
+
 /**
- * Picks the first English flavor text entry available from the species data.
+ * Picks the first localized flavor text entry available from the species data.
  */
-export function extractDescription(species?: PokemonSpeciesData): string {
-  if (!species?.flavor_text_entries?.length) return ''
-  const entry = species.flavor_text_entries.find((item) => item.language.name === 'en')
+export function extractDescription(species: PokemonSpeciesData | undefined, locale: Locale = 'en'): string {
+  const entry = findByLanguage(species?.flavor_text_entries, locale)
   if (!entry) return ''
   return entry.flavor_text.replace(/\f|\n|\r/g, ' ').trim()
 }
 
 /**
- * Retrieves the English genus (e.g., "Seed Pokémon") for display.
+ * Retrieves the localized genus (e.g., "Seed Pokémon") for display.
  */
-export function extractGenus(species?: PokemonSpeciesData): string {
-  if (!species?.genera?.length) return ''
-  const genus = species.genera.find((item) => item.language.name === 'en')
+export function extractGenus(species: PokemonSpeciesData | undefined, locale: Locale = 'en'): string {
+  const genus = findByLanguage(species?.genera, locale)
   return genus?.genus ?? ''
 }
 
 /**
- * Returns the Japanese name when available to enhance the hero background label.
+ * Returns the localized native name when available (Japanese by default).
  */
-export function extractNativeName(species?: PokemonSpeciesData): string {
-  if (!species?.names?.length) return ''
-  const japanese = species.names.find((item) => item.language.name === 'ja-Hrkt')
-  return japanese?.name ?? ''
+export function extractNativeName(species: PokemonSpeciesData | undefined, locale: Locale = 'en'): string {
+  const entry = findByLanguage(species?.names, locale)
+  if (entry?.name) return entry.name
+  // Some locales (like Japanese) store native scripts under ja-Hrkt only.
+  if (locale === 'ja') {
+    const japanese = species?.names?.find((item) => item.language?.name === 'ja-Hrkt')
+    if (japanese?.name) return japanese.name
+  }
+  return ''
+}
+
+export function extractLocalizedDisplayName(
+  data: PokemonData,
+  species: PokemonSpeciesData | undefined,
+  locale: Locale = 'en'
+): string {
+  const localized = findByLanguage(species?.names, locale)?.name
+  if (localized) return localized
+  return formatPokemonName(data.name)
 }
 
 /**

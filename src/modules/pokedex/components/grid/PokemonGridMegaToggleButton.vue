@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useTranslation } from '@/composables/useTranslation'
+
 const props = defineProps<{
   isVisible: boolean
   isMegaActive: boolean
@@ -10,6 +12,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   toggle: []
 }>()
+
+const { t } = useTranslation()
 
 function handleClick() {
   if (!props.isVisible || !props.stoneSprite) return
@@ -25,7 +29,7 @@ function handleClick() {
     @click.stop="handleClick"
   >
     <span class="sr-only">
-      {{ isMegaActive ? 'Return to base form' : 'Trigger mega evolution' }}
+      {{ isMegaActive ? `${t('sr.returnBaseForm')} ${displayName}` : `${t('sr.activateForm')} ${displayName}` }}
     </span>
     <span class="mega-toggle__image" aria-hidden="true">
       <img :src="stoneSprite" :alt="`${displayName} mega stone`" loading="lazy" />

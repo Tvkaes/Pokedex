@@ -2,6 +2,9 @@
 import HeadingBlock from '@/components/ui/HeadingBlock.vue'
 import PokedexSearchBar from '@/components/pokemon/PokedexSearchBar.vue'
 import type { SearchSuggestion } from '@/types/search.types'
+import { useTranslation } from '@/composables/useTranslation'
+
+const { t } = useTranslation()
 
 const props = defineProps<{
   modelValue: string
@@ -21,9 +24,9 @@ const emit = defineEmits<{
   <div class="search-panel">
     <HeadingBlock
       class="search-panel__hero"
-      eyebrow="Pokédex"
-      title="Instantly jump to any species in cinematic view."
-      subtitle="Enter a name or National Dex number and we will take you right to the hero experience."
+      :eyebrow="t('search.eyebrow')"
+      :title="t('search.title')"
+      :subtitle="t('search.subtitle')"
       size="lg"
     />
 

@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { PokemonDisplayData } from '@/types/pokemon.types'
+import { useTranslation } from '@/composables/useTranslation'
 
 const props = defineProps<{
   pokemon: PokemonDisplayData
 }>()
+
+const { t } = useTranslation()
 </script>
 
 <template>
@@ -12,7 +15,7 @@ const props = defineProps<{
       {{ pokemon.description }}
     </p>
     <p class="type-caption text-white/60">
-      Also known as {{ pokemon.name }} in its native regions.
+      {{ t('entry.aliasPrefix') }} {{ pokemon.name }} {{ t('entry.aliasSuffix') }}
     </p>
   </div>
 </template>

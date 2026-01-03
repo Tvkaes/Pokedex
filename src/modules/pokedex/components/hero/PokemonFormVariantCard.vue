@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useTranslation } from '@/composables/useTranslation'
+
 const props = defineProps<{
   title: string
   variantKind?: string | null
@@ -12,6 +15,16 @@ const props = defineProps<{
 const emit = defineEmits<{
   select: []
 }>()
+
+const { t } = useTranslation()
+
+const variantLabel = computed(() => {
+  if (props.isBase) return t('variant.base')
+  if (props.variantKind === 'primal') return t('variant.primal')
+  if (props.variantKind === 'dynamax') return t('variant.dynamax')
+  if (props.variantKind === 'mega') return t('variant.mega')
+  return props.variantKind?.toUpperCase() ?? t('variant.base')
+})
 </script>
 
 <template>
@@ -21,7 +34,7 @@ const emit = defineEmits<{
     @click="emit('select')"
   >
     <div class="flex items-center justify-between text-[10px] uppercase tracking-[0.4em] text-white/50">
-      <span>{{ isBase ? 'BASE' : variantKind || 'FORM' }}</span>
+      <span>{{ variantLabel }}</span>
       <span v-if="region">{{ region }}</span>
     </div>
     <p class="text-base font-semibold text-white group-hover:text-white">
@@ -29,11 +42,11 @@ const emit = defineEmits<{
     </p>
     <div class="text-[11px] text-white/65 space-y-0.5">
       <p>
-        Tipo principal:
+        {{ t('forms.primaryType') }}:
         <span class="font-mono uppercase text-white">{{ primaryType }}</span>
       </p>
       <p v-if="secondaryType">
-        Tipo secundario:
+        {{ t('forms.secondaryType') }}:
         <span class="font-mono uppercase text-white">{{ secondaryType }}</span>
       </p>
       <p v-if="hint" class="text-[10px] uppercase tracking-[0.3em] text-white/40">

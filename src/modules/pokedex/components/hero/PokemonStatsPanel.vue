@@ -5,6 +5,9 @@ import PokemonStatRadar from './PokemonStatRadar.vue'
 import PokemonCompetitiveCategoryGrid from './PokemonCompetitiveCategoryGrid.vue'
 import PokemonCompetitiveCategoryDetail from './PokemonCompetitiveCategoryDetail.vue'
 import { getPokemonCompetitiveMoveSets } from '@/services/pokemonService'
+import { useTranslation } from '@/composables/useTranslation'
+
+const { t } = useTranslation()
 
 const props = defineProps<{
   pokemonId: number
@@ -26,10 +29,10 @@ let loadToken = 0
 const competitiveCategories = computed<CompetitiveCategory[]>(() => {
   if (!localCompetitiveSets.value) return []
   return [
-    { key: 'sweeper', label: 'Sweeper', accent: 'text-emerald-300', moves: localCompetitiveSets.value.sweeper ?? [] },
-    { key: 'wallbreaker', label: 'Wallbreaker', accent: 'text-rose-300', moves: localCompetitiveSets.value.wallbreaker ?? [] },
-    { key: 'tank', label: 'Tank / Stall', accent: 'text-sky-300', moves: localCompetitiveSets.value.tank ?? [] },
-    { key: 'support', label: 'Support', accent: 'text-amber-200', moves: localCompetitiveSets.value.support ?? [] },
+    { key: 'sweeper', label: t('sweeper'), accent: 'text-emerald-300', moves: localCompetitiveSets.value.sweeper ?? [] },
+    { key: 'wallbreaker', label: t('wallbreaker'), accent: 'text-rose-300', moves: localCompetitiveSets.value.wallbreaker ?? [] },
+    { key: 'tank', label: t('tank'), accent: 'text-sky-300', moves: localCompetitiveSets.value.tank ?? [] },
+    { key: 'support', label: t('support'), accent: 'text-amber-200', moves: localCompetitiveSets.value.support ?? [] },
   ].filter((category) => category.moves.length)
 })
 
@@ -111,7 +114,7 @@ watch(
         <div class="flex-1">
           <div class="rounded-2xl border border-white/10 bg-white/5/5 p-2 sm:p-3 lg:p-3.5 flex flex-col gap-2 sm:gap-2.5">
             <div class="flex items-center justify-between">
-              <p class="text-[9px] uppercase tracking-[0.35em] text-white/60">Competitive Move Sets</p>
+              <p class="text-[9px] uppercase tracking-[0.35em] text-white/60">{{ t('competitiveSets') }}</p>
             </div>
             <div class="relative min-h-[100px]">
               <div
@@ -119,7 +122,7 @@ watch(
                 class="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 text-white/70 text-[9px] uppercase tracking-[0.35em]"
               >
                 <div class="h-6 w-6 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-                <p>Cargando sets...</p>
+                <p>{{ t('loadingSets') }}</p>
               </div>
               <Transition v-else-if="hasCompetitiveSets" name="panel-fade" mode="out-in">
                 <PokemonCompetitiveCategoryGrid
@@ -139,7 +142,7 @@ watch(
                 v-else
                 class="rounded-2xl border border-dashed border-white/15 p-6 text-center text-white/40 text-xs uppercase tracking-[0.3em]"
               >
-                Este Pokémon aún no tiene sets competitivos disponibles.
+                {{ t('noCompetitiveSets') }}
               </div>
             </div>
           </div>

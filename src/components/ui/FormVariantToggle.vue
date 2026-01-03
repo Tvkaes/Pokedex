@@ -13,7 +13,7 @@
   >
     <span class="sr-only">
       <slot name="sr">
-        {{ active ? `Desactivar ${label}` : `Activar ${label}` }}
+        {{ srLabel }}
       </slot>
     </span>
 
@@ -25,6 +25,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useTranslation } from '@/composables/useTranslation'
 
 const props = withDefaults(
   defineProps<{
@@ -46,6 +47,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{ toggle: [] }>()
 
+const { t } = useTranslation()
+
 const iconSrc = computed(() => {
   if (props.icon) return props.icon
   if (props.variant === 'dynamax') return '/dynamax.svg'
@@ -53,6 +56,13 @@ const iconSrc = computed(() => {
 })
 
 const iconAlt = computed(() => `${props.label} ${props.variant} icon`)
+
+const srLabel = computed(() => {
+  if (props.variant === 'dynamax') {
+    return props.active ? `${t('sr.returnFromDynamax')} ${props.label}` : `${t('sr.activateDynamax')} ${props.label}`
+  }
+  return props.active ? `${t('sr.returnBaseForm')} ${props.label}` : `${t('sr.activateForm')} ${props.label}`
+})
 </script>
 
 <style scoped>

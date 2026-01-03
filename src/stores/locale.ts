@@ -32,7 +32,16 @@ export const useLocaleStore = defineStore('locale', () => {
   }
 
   function t(key: TranslationKey): string {
-    return translations[locale.value][key] ?? key
+    const localeTranslations = translations[locale.value]
+    if (localeTranslations && localeTranslations[key] !== undefined) {
+      return localeTranslations[key]
+    }
+
+    if (import.meta.env.DEV && locale.value !== 'en') {
+      console.warn(`[i18n] Missing translation for "${key}" in locale "${locale.value}". Falling back to English.`)
+    }
+
+    return translations.en[key] ?? key
   }
 
   const currentLocale = computed(() => locale.value)

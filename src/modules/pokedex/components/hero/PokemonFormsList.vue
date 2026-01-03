@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PokemonFormVariantCard from './PokemonFormVariantCard.vue'
 import type { PokemonFormEntry } from '@/types/pokemon.types'
+import { useTranslation } from '@/composables/useTranslation'
 
 const props = defineProps<{
   hasForms: boolean
@@ -11,6 +12,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   select: [index: number | null]
 }>()
+
+const { t } = useTranslation()
 
 function handleSelect(index: number | null) {
   emit('select', index)
@@ -28,9 +31,9 @@ function handleSelect(index: number | null) {
               class="w-full rounded-full border border-white/15 bg-white/10 px-4 py-2 type-pill text-white/90 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
               @click="handleSelect(null)"
             >
-              Return to base form
+              {{ t('forms.backToBase') }}
             </button>
-            <p class="type-caption text-white/50">Other forms</p>
+            <p class="type-caption text-white/50">{{ t('forms.otherForms') }}</p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <PokemonFormVariantCard
@@ -41,13 +44,13 @@ function handleSelect(index: number | null) {
               :region="entry.form.region"
               :primary-type="entry.form.primaryType"
               :secondary-type="entry.secondaryType"
-              hint="Preview in hero"
+              :hint="t('forms.hintPreview')"
               @select="() => handleSelect(entry.index)"
             />
           </div>
         </div>
       </Transition>
     </div>
-    <p v-else class="text-sm text-white/60">No alternate forms available for this Pokémon.</p>
+    <p v-else class="text-sm text-white/60">{{ t('forms.none') }}</p>
   </div>
 </template>

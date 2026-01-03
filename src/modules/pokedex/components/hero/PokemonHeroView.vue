@@ -9,6 +9,9 @@ import { usePokemonFormatting } from '@/composables/usePokemonFormatting'
 import { usePokemonMedia } from '@/composables/usePokemonMedia'
 import { usePokemonNavigation } from '@/composables/usePokemonNavigation'
 import { getTypeColor } from '@/utils/typeColors'
+import { useTranslation } from '@/composables/useTranslation'
+
+const { t } = useTranslation()
 
 const props = defineProps<{
   pokemon: PokemonDisplayData
@@ -151,7 +154,7 @@ function handleSelect(id: number) {
             </svg>
           </div>
           <div class="text-[10px] xl:text-xs text-white/70 tracking-[0.2em] xl:tracking-[0.3em] rotate-180 writing-vertical">
-            Pokédex · All Regions
+            {{ t('pokedex.allRegions') }}
           </div>
         </div>
       </div>

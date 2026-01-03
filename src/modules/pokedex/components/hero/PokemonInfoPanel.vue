@@ -14,7 +14,6 @@ const props = defineProps<{
   imperialWeight: string
   hasMegaEvolution: boolean
   megaForms: PokemonAlternateForm[]
-  specialFormEntries: PokemonFormEntry[]
   regionalFormEntries: PokemonFormEntry[]
   activeMegaFormIndex: number | null
 }>()
@@ -77,7 +76,6 @@ function handleSectionSelect(sectionId: PokemonInfoSectionId) {
     <PokemonInfoHeader
       :pokemon="pokemon"
       :has-mega-evolution="hasMegaEvolution"
-      :special-form-entries="specialFormEntries"
       :active-mega-form-index="activeMegaFormIndex"
       @select-mega-form="handleMegaSelect"
     />

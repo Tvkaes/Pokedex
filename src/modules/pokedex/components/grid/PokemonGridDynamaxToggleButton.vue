@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useTranslation } from '@/composables/useTranslation'
 
 const props = defineProps<{
   isVisible: boolean
@@ -11,6 +12,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   toggle: []
 }>()
+
+const { t } = useTranslation()
 
 const iconSrc = computed(() => props.iconSprite ?? '/dynamax.svg')
 
@@ -31,8 +34,8 @@ function handleClick() {
     <span class="sr-only">
       {{
         isActive
-          ? `Return to base form from ${displayName}`
-          : `Activate Dynamax form ${displayName}`
+          ? `${t('sr.returnFromDynamax')} ${displayName}`
+          : `${t('sr.activateDynamax')} ${displayName}`
       }}
     </span>
     <span class="dynamax-toggle__image" aria-hidden="true">

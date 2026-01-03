@@ -13,6 +13,9 @@ import { useScrollTopButton } from '@/composables/useScrollTopButton'
 import { useHeroTheme } from '@/composables/useHeroTheme'
 import PokedexSearchPanel from '@/components/pokemon/PokedexSearchPanel.vue'
 import { usePokedexSearch } from '@/composables/usePokedexSearch'
+import { useTranslation } from '@/composables/useTranslation'
+
+const { t, locale } = useTranslation()
 
 
 const dataStore = usePokemonDataStore()
@@ -70,6 +73,17 @@ watch(
   { immediate: false }
 )
 
+watch(
+  () => locale.value,
+  (newLocale, oldLocale) => {
+    if (newLocale === oldLocale) return
+    dataStore.loadGenerationEntries(viewStore.activeGeneration, {
+      forceRefresh: true,
+      locale: newLocale,
+    })
+  }
+)
+
 onMounted(() => {
   void loadInitialData()
 })
@@ -110,7 +124,7 @@ onMounted(() => {
         <div v-else-if="dataStore.isLoading" key="hero-loading" class="min-h-screen flex items-center justify-center">
           <div class="text-center text-white/80 uppercase tracking-[0.4em] space-y-4">
             <div class="w-16 h-16 mx-auto border-4 border-white/20 border-t-white rounded-full animate-spin" />
-            <p>Loading entry...</p>
+            <p>{{ t('loading.entry') }}</p>
           </div>
         </div>
         <div v-else key="hero-empty" class="min-h-screen flex items-center justify-center"></div>

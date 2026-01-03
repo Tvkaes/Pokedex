@@ -5,6 +5,7 @@ import {
   extractDescription,
   extractGenus,
   extractNativeName,
+  extractLocalizedDisplayName,
   mapStats,
   selectFeaturedAbility,
 } from '@/utils/helpers'
@@ -22,6 +23,7 @@ import type {
 import { generateCompetitiveMoveSets } from '@/services/competitiveMovesService'
 import { POKEMON_GENERATIONS } from '@pokedex/data/generations'
 import { buildItemSpriteUrl, getMegaStoneSlug } from '@pokedex/data/mega-stones'
+import type { Locale } from '@/locales/translations'
 
 type PokemonBundle = {
   data: PokemonData
@@ -140,7 +142,7 @@ async function resolveMegaStoneForForm(formName: string): Promise<MegaStoneAsset
   }
 }
 
-async function extractAlternateForms(speciesData: PokemonSpeciesData): Promise<PokemonAlternateForm[]> {
+async function extractAlternateForms(speciesData: PokemonSpeciesData, locale: Locale): Promise<PokemonAlternateForm[]> {
   const varieties = speciesData?.varieties ?? []
   const classifiedVarieties = varieties
     .filter((variety) => !variety.is_default)
@@ -194,8 +196,8 @@ async function extractAlternateForms(speciesData: PokemonSpeciesData): Promise<P
           stats: mapStats(formData),
           height: formData.height / 10,
           weight: formData.weight / 10,
-          description: extractDescription(speciesData),
-          genus: extractGenus(speciesData),
+          description: extractDescription(speciesData, locale),
+          genus: extractGenus(speciesData, locale),
           variantKind: classification.kind,
           ...(classification.region ? { region: classification.region } : {}),
           ...(stone ? { stone } : {}),
@@ -212,9 +214,9 @@ async function extractAlternateForms(speciesData: PokemonSpeciesData): Promise<P
   return forms.filter((form): form is PokemonAlternateForm => form !== null)
 }
 
-async function fetchPokemonBundle(identifier: string | number): Promise<PokemonBundle> {
+async function fetchPokemonBundle(identifier: string | number, locale: Locale): Promise<PokemonBundle> {
   const [data, species] = await Promise.all([fetchPokemon(identifier), fetchPokemonSpecies(identifier)])
-  const alternateForms = await extractAlternateForms(species)
+  const alternateForms = await extractAlternateForms(species, locale)
   return { data, species, alternateForms }
 }
 
@@ -255,16 +257,17 @@ function selectSignatureMoves(data: PokemonData): PokemonSignatureMove[] {
 
 function mapDisplayData(
   bundle: PokemonBundle,
+  locale: Locale,
   featuredAbilityOverride?: PokemonFeaturedAbility | null
 ): PokemonDisplayData {
   const { data, species, alternateForms } = bundle
   return {
     id: data.id,
     formattedId: formatPokemonId(data.id),
-    name: formatPokemonName(data.name),
-    nativeName: extractNativeName(species),
-    description: extractDescription(species),
-    genus: extractGenus(species),
+    name: extractLocalizedDisplayName(data, species, locale),
+    nativeName: extractNativeName(species, locale),
+    description: extractDescription(species, locale),
+    genus: extractGenus(species, locale),
     stats: mapStats(data),
     types: data.types,
     abilities: data.abilities,
@@ -288,13 +291,13 @@ function mapDisplayData(
   }
 }
 
-function mapGridEntry(bundle: PokemonBundle): PokemonGridEntry {
+function mapGridEntry(bundle: PokemonBundle, locale: Locale): PokemonGridEntry {
   const { data, species, alternateForms } = bundle
   return {
     id: data.id,
     formattedId: formatPokemonId(data.id),
-    name: formatPokemonName(data.name),
-    nativeName: extractNativeName(species),
+    name: extractLocalizedDisplayName(data, species, locale),
+    nativeName: extractNativeName(species, 'ja'),
     sprite:
       data.sprites?.other?.['official-artwork']?.front_default ??
       data.sprites?.other?.home?.front_default ??
@@ -307,12 +310,12 @@ function mapGridEntry(bundle: PokemonBundle): PokemonGridEntry {
   }
 }
 
-export async function getPokemonGridEntry(identifier: string | number): Promise<PokemonGridEntry> {
-  const bundle = await fetchPokemonBundle(identifier)
-  return mapGridEntry(bundle)
+export async function getPokemonGridEntry(identifier: string | number, locale: Locale = 'en'): Promise<PokemonGridEntry> {
+  const bundle = await fetchPokemonBundle(identifier, locale)
+  return mapGridEntry(bundle, locale)
 }
 
-export async function getGenerationGridEntries(generationId: string): Promise<PokemonGridEntry[]> {
+export async function getGenerationGridEntries(generationId: string, locale: Locale = 'en'): Promise<PokemonGridEntry[]> {
   const generation = POKEMON_GENERATIONS.find((gen) => gen.id === generationId)
   if (!generation) {
     return []
@@ -333,7 +336,7 @@ export async function getGenerationGridEntries(generationId: string): Promise<Po
       if (index >= ids.length) break
       const id = ids[index]
       if (typeof id === 'undefined') continue
-      const entry = await getPokemonGridEntry(id)
+      const entry = await getPokemonGridEntry(id, locale)
       results[index] = entry
     }
   }
@@ -342,20 +345,36 @@ export async function getGenerationGridEntries(generationId: string): Promise<Po
   return results.filter((entry): entry is PokemonGridEntry => Boolean(entry))
 }
 
-function extractAbilityDescription(details?: PokemonAbilityDetails | null): string | null {
-  if (!details?.effect_entries?.length) return null
-  const entry = details.effect_entries.find((item) => item.language?.name === 'en')
-  return entry?.short_effect ?? entry?.effect ?? null
+const ABILITY_LANGUAGE_PREFERENCE: Record<Locale, string[]> = {
+  en: ['en'],
+  es: ['es'],
+  ja: ['ja'],
 }
 
-export async function getPokemonDetails(identifier: string | number): Promise<PokemonDetails> {
-  const cacheKey = normalizeIdentifier(identifier)
+function extractAbilityDescription(details: PokemonAbilityDetails | undefined | null, locale: Locale): string | null {
+  if (!details?.effect_entries?.length) return null
+  const preference = [...(ABILITY_LANGUAGE_PREFERENCE[locale] ?? ABILITY_LANGUAGE_PREFERENCE.en), 'en']
+  for (const code of preference) {
+    const entry = details.effect_entries.find((item) => item.language?.name === code)
+    if (entry) {
+      return entry.short_effect ?? entry.effect ?? null
+    }
+  }
+  return null
+}
+
+function buildDetailsCacheKey(identifier: string | number, locale: Locale): string {
+  return `${normalizeIdentifier(identifier)}::${locale}`
+}
+
+export async function getPokemonDetails(identifier: string | number, locale: Locale = 'en'): Promise<PokemonDetails> {
+  const cacheKey = buildDetailsCacheKey(identifier, locale)
   const cached = pokemonDetailsCache.get(cacheKey)
   if (cached) {
     return cached
   }
 
-  const bundle = await fetchPokemonBundle(identifier)
+  const bundle = await fetchPokemonBundle(identifier, locale)
   const primaryType = bundle.data.types?.[0]?.type?.name ?? 'normal'
   const featuredAbility = selectFeaturedAbility(bundle.data)
   let abilityDescription: string | null = null
@@ -363,13 +382,17 @@ export async function getPokemonDetails(identifier: string | number): Promise<Po
   if (featuredAbility?.slug) {
     try {
       const details = await fetchPokemonAbility(featuredAbility.slug)
-      abilityDescription = extractAbilityDescription(details)
+      abilityDescription = extractAbilityDescription(details, locale)
     } catch (error) {
       console.warn(`Failed to fetch ability details for ${featuredAbility.slug}`, error)
     }
   }
 
-  const display = mapDisplayData(bundle, featuredAbility ? { ...featuredAbility, description: abilityDescription } : featuredAbility)
+  const display = mapDisplayData(
+    bundle,
+    locale,
+    featuredAbility ? { ...featuredAbility, description: abilityDescription } : featuredAbility
+  )
 
   const details: PokemonDetails = {
     primaryType,
@@ -382,9 +405,9 @@ export async function getPokemonDetails(identifier: string | number): Promise<Po
   return details
 }
 
-export async function prefetchPokemonDetails(identifier: string | number): Promise<void> {
+export async function prefetchPokemonDetails(identifier: string | number, locale: Locale = 'en'): Promise<void> {
   try {
-    await getPokemonDetails(identifier)
+    await getPokemonDetails(identifier, locale)
   } catch (error) {
     console.warn(`Prefetch failed for Pokémon ${identifier}`, error)
   }

@@ -6,6 +6,7 @@ import FormVariantToggle from '@/components/ui/FormVariantToggle.vue'
 import { useAlternateForms } from '@/composables/useAlternateForms'
 import FrostedCard from '@/components/base/FrostedCard.vue'
 import { prefetchPokemonDetails } from '@/services/pokemonService'
+import { useTranslation } from '@/composables/useTranslation'
 
 const props = defineProps<{
   entry: PokemonGridEntry
@@ -14,6 +15,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   select: [id: number]
 }>()
+
+const { t, locale } = useTranslation()
 
 const spriteMotion = computed(() => ({
   initial: {
@@ -55,9 +58,9 @@ const hasMultipleStones = computed(() => formStones.value.length > 1)
 const activeVariantLabel = computed(() => {
   if (!isMegaActive.value) return null
   const kind = activeForm.value?.variantKind
-  if (kind === 'dynamax') return 'Dynamax'
-  if (kind === 'primal') return 'Primal'
-  if (kind === 'mega') return 'Mega'
+  if (kind === 'dynamax') return t('variant.dynamax')
+  if (kind === 'primal') return t('variant.primal')
+  if (kind === 'mega') return t('variant.mega')
   return null
 })
 const pulseMode = ref<'mega' | 'base' | null>(null)
@@ -82,7 +85,7 @@ function handleClick() {
 function handlePrefetch() {
   if (hasPrefetched.value) return
   hasPrefetched.value = true
-  void prefetchPokemonDetails(props.entry.id)
+  void prefetchPokemonDetails(props.entry.id, locale.value)
 }
 
 function handleFormToggle(targetIndex: number) {
@@ -181,7 +184,11 @@ function playCry() {
             @toggle="() => handleFormToggle(index)"
           >
             <template #sr>
-              {{ activeFormIndex === index ? `Return ${form.name} to base form` : `Activate ${form.name}` }}
+              {{
+                activeFormIndex === index
+                  ? `${t('sr.returnBaseForm')} ${form.name}`
+                  : `${t('sr.activateForm')} ${form.name}`
+              }}
             </template>
           </FormVariantToggle>
           <FormVariantToggle
@@ -195,8 +202,8 @@ function playCry() {
             <template #sr>
               {{
                 activeFormIndex === index
-                  ? `Return from Dynamax form ${form.name}`
-                  : `Activate Dynamax form ${form.name}`
+                  ? `${t('sr.returnFromDynamax')} ${form.name}`
+                  : `${t('sr.activateDynamax')} ${form.name}`
               }}
             </template>
           </FormVariantToggle>

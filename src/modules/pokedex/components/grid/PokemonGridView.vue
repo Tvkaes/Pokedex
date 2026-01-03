@@ -3,11 +3,14 @@ import { computed } from 'vue'
 import type { PokemonGridEntry } from '@/types/pokemon.types'
 import PokemonGridCard from './PokemonGridCard.vue'
 import PokemonGridSkeleton from './PokemonGridSkeleton.vue'
+import { useTranslation } from '@/composables/useTranslation'
 
 const props = defineProps<{
   entries: PokemonGridEntry[]
   isLoading: boolean
 }>()
+
+const { t } = useTranslation()
 
 const emit = defineEmits<{
   select: [id: number]
@@ -29,7 +32,7 @@ function handleSelect(id: number) {
     </TransitionGroup>
 
     <div v-else class="flex min-h-[50vh] items-center justify-center text-center text-white/70">
-      No Pokémon entries loaded for this generation yet.
+      {{ t('grid.empty') }}
     </div>
   </div>
 </template>

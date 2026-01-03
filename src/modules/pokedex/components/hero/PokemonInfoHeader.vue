@@ -1,23 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import FormVariantToggle from '@/components/ui/FormVariantToggle.vue'
-import type { PokemonDisplayData, PokemonFormEntry } from '@/types/pokemon.types'
+import type { PokemonDisplayData, PokemonAlternateForm, PokemonFormEntry } from '@/types/pokemon.types'
+import { useTranslation } from '@/composables/useTranslation'
 
 const props = defineProps<{
   pokemon: PokemonDisplayData
   hasMegaEvolution: boolean
-  specialFormEntries: PokemonFormEntry[]
+  megaForms: PokemonAlternateForm[]
   activeMegaFormIndex: number | null
+  specialFormEntries: PokemonFormEntry[]
 }>()
 
+const { t } = useTranslation()
+
 const megaFormEntries = computed(() =>
-  props.specialFormEntries.filter(
-    ({ form }) => form.variantKind === 'mega' || form.variantKind === 'primal'
-  )
+  props.megaForms.map((form, index) => ({
+    form,
+    index,
+  }))
 )
 
 const dynamaxFormEntries = computed(() =>
-  props.specialFormEntries.filter(({ form }) => form.variantKind === 'dynamax')
+  megaFormEntries.value.filter(({ form }) => form.variantKind === 'dynamax')
 )
 
 const emit = defineEmits<{
@@ -43,7 +48,7 @@ function handleMegaToggle(index: number) {
       <h1 class="type-title-lg font-display leading-tight text-white">
         {{ pokemon.name }}
       </h1>
-      <div v-if="hasMegaEvolution && specialFormEntries.length" class="flex flex-wrap items-center gap-2">
+      <div v-if="hasMegaEvolution && megaFormEntries.length" class="flex flex-wrap items-center gap-2">
         <div v-if="megaFormEntries.length" class="flex flex-wrap items-center gap-2">
           <FormVariantToggle
             v-for="entry in megaFormEntries"
@@ -58,8 +63,8 @@ function handleMegaToggle(index: number) {
             <template #sr>
               {{
                 activeMegaFormIndex === entry.index
-                  ? `Return ${entry.form.name} to base form`
-                  : `Activate ${entry.form.name}`
+                  ? `${t('sr.returnBaseForm')} ${entry.form.name}`
+                  : `${t('sr.activateForm')} ${entry.form.name}`
               }}
             </template>
           </FormVariantToggle>
@@ -76,8 +81,8 @@ function handleMegaToggle(index: number) {
             <template #sr>
               {{
                 activeMegaFormIndex === entry.index
-                  ? `Return from Dynamax form ${entry.form.name}`
-                  : `Activate Dynamax form ${entry.form.name}`
+                  ? `${t('sr.returnFromDynamax')} ${entry.form.name}`
+                  : `${t('sr.activateDynamax')} ${entry.form.name}`
               }}
             </template>
           </FormVariantToggle>

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import LocaleToggle from '@/components/ui/LocaleToggle.vue'
+import { useTranslation } from '@/composables/useTranslation'
 
 const props = defineProps<{
   active: 'hero' | 'grid' | 'search'
 }>()
+
+const { t } = useTranslation()
 
 const emit = defineEmits<{
   switch: ['hero' | 'grid' | 'search']
@@ -33,7 +36,7 @@ function handleSelect(mode: 'hero' | 'grid' | 'search') {
       class="view-toggle__button"
       :class="[{ 'view-toggle__button--active': active === 'hero' }]"
       type="button"
-      aria-label="Single view"
+      :aria-label="t('sr.singleView')"
       @click="handleSelect('hero')"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -52,7 +55,7 @@ function handleSelect(mode: 'hero' | 'grid' | 'search') {
       class="view-toggle__button"
       :class="[{ 'view-toggle__button--active': active === 'grid' }]"
       type="button"
-      aria-label="Grid view"
+      :aria-label="t('sr.gridView')"
       @click="handleSelect('grid')"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -63,7 +66,13 @@ function handleSelect(mode: 'hero' | 'grid' | 'search') {
       </svg>
      
     </button>
-    <button class="view-toggle__button" :class="[{ 'view-toggle__button--active': active === 'search' }]" type="button" aria-label="Search view" @click="handleSelect('search')">
+    <button
+      class="view-toggle__button"
+      :class="[{ 'view-toggle__button--active': active === 'search' }]"
+      type="button"
+      :aria-label="t('sr.searchView')"
+      @click="handleSelect('search')"
+    >
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="11" cy="11" r="6" />
         <line x1="16" y1="16" x2="21" y2="21" stroke-width="1.5" stroke-linecap="round" />

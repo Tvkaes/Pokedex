@@ -3,12 +3,15 @@ import { computed } from 'vue'
 import { GenerationConfig } from '@/modules/pokedex/data/generations'
 import FrostedCard from '@/components/base/FrostedCard.vue'
 import HeadingBlock from '@/components/ui/HeadingBlock.vue'
+import { useTranslation } from '@/composables/useTranslation'
 
 const props = defineProps<{
   generations: GenerationConfig[]
   activeId: string
   loading: boolean
 }>()
+
+const { t } = useTranslation()
 
 const emit = defineEmits<{
   select: [id: string]
@@ -31,9 +34,9 @@ function handleSelect(id: string) {
   <div class="mt-20 px-6 sm:px-10">
     <FrostedCard as="div" class="mx-auto max-w-5xl rounded-[40px] border border-white/20 px-6 py-8 text-center space-y-8">
       <HeadingBlock
-        eyebrow="Generations"
-        title="Explore the Eras of the Pokédex"
-        subtitle="Pick a region to load its full roster and browse every species."
+        :eyebrow="t('generations.eyebrow')"
+        :title="t('generations.title')"
+        :subtitle="t('generations.subtitle')"
         align="center"
         size="lg"
       />
