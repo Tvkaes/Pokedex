@@ -4,78 +4,23 @@ import {
   formatPokemonName,
   extractDescription,
   extractGenus,
-  extractNativeName,
-  extractLocalizedDisplayName,
   mapStats,
   selectFeaturedAbility,
-} from '@/utils/helpers'
+  classifyVariant,
+  mapDisplayData,
+  mapGridEntry,
+  type PokemonBundle,
+  type Locale,
+  type PokemonAlternateForm,
+  type PokemonDisplayData,
+  type PokemonGridEntry,
+  type PokemonSpeciesData,
+  type PokemonAbilityDetails,
+} from '@tvkaes/pkmn-core'
 import type { PokemonDetails } from '@/types/pokemon-details.types'
-import type {
-  PokemonAbilityDetails,
-  PokemonAlternateForm,
-  PokemonData,
-  PokemonDisplayData,
-  PokemonFeaturedAbility,
-  PokemonGridEntry,
-  PokemonSignatureMove,
-  PokemonSpeciesData,
-} from '@/types/pokemon.types'
 import { generateCompetitiveMoveSets } from '@/services/competitiveMovesService'
 import { POKEMON_GENERATIONS } from '@pokedex/data/generations'
 import { buildItemSpriteUrl, getMegaStoneSlug } from '@pokedex/data/mega-stones'
-import type { Locale } from '@/locales/translations'
-
-type PokemonBundle = {
-  data: PokemonData
-  species: PokemonSpeciesData
-  alternateForms: PokemonAlternateForm[]
-}
-
-type VariantClassification = {
-  kind: NonNullable<PokemonAlternateForm['variantKind']>
-  region?: string
-}
-
-const REGIONAL_VARIANTS = [
-  { keyword: 'alola', region: 'Alola' },
-  { keyword: 'galar', region: 'Galar' },
-  { keyword: 'hisui', region: 'Hisui' },
-  { keyword: 'paldea', region: 'Paldea' },
-]
-
-const SPECIAL_VARIANT_KEYWORDS = [
-  'attack',
-  'defense',
-  'speed',
-  'school',
-  'shield',
-  'blade',
-  'origin',
-  'sky',
-  'zen',
-  'dawn',
-  'dusk',
-  'midnight',
-  'sunny',
-  'rainy',
-  'snowy',
-  'therian',
-  'incarnate',
-  'resolute',
-  'pirouette',
-  'trash',
-  'sand',
-  'average',
-  'sensu',
-  'pom-pom',
-  'pau',
-  'baile',
-  'heat',
-  'wash',
-  'frost',
-  'fan',
-  'mow',
-]
 
 type MegaStoneAsset = { slug: string; sprite?: string | null }
 const megaStoneCache = new Map<string, MegaStoneAsset | undefined>()
@@ -84,36 +29,6 @@ const competitiveSetsCache = new Map<string, PokemonDisplayData['competitiveSets
 
 function normalizeIdentifier(identifier: string | number): string {
   return String(identifier).toLowerCase()
-}
-
-function classifyVariant(name: string): VariantClassification | null {
-  const normalized = name.toLowerCase()
-
-  if (normalized.includes('mega')) {
-    return { kind: 'mega' }
-  }
-
-  if (normalized.includes('primal')) {
-    return { kind: 'primal' }
-  }
-
-  if (normalized.includes('gigantamax') || normalized.includes('gmax') || normalized.includes('dynamax') || normalized.includes('dmax')) {
-    return { kind: 'dynamax' }
-  }
-
-  const regionalMatch = REGIONAL_VARIANTS.find(({ keyword }) => normalized.includes(keyword))
-  if (regionalMatch) {
-    return {
-      kind: 'regional',
-      region: regionalMatch.region,
-    }
-  }
-
-  if (SPECIAL_VARIANT_KEYWORDS.some((keyword) => normalized.includes(keyword))) {
-    return { kind: 'special' }
-  }
-
-  return null
 }
 
 async function resolveMegaStoneForForm(formName: string): Promise<MegaStoneAsset | undefined> {
@@ -155,7 +70,7 @@ async function extractAlternateForms(speciesData: PokemonSpeciesData, locale: Lo
           }
         : null
     })
-    .filter((entry): entry is { variety: PokemonSpeciesData['varieties'][number]; classification: VariantClassification } =>
+    .filter((entry): entry is { variety: PokemonSpeciesData['varieties'][number]; classification: NonNullable<ReturnType<typeof classifyVariant>> } =>
       Boolean(entry)
     )
 
@@ -218,96 +133,6 @@ async function fetchPokemonBundle(identifier: string | number, locale: Locale): 
   const [data, species] = await Promise.all([fetchPokemon(identifier), fetchPokemonSpecies(identifier)])
   const alternateForms = await extractAlternateForms(species, locale)
   return { data, species, alternateForms }
-}
-
-function formatMoveLabel(name: string): string {
-  return name
-    .split('-')
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ')
-}
-
-function selectSignatureMoves(data: PokemonData): PokemonSignatureMove[] {
-  if (!data.moves?.length) return []
-
-  const normalized = data.moves
-    .map((entry): PokemonSignatureMove => {
-      const primaryDetail =
-        entry.version_group_details?.find((detail) => detail.move_learn_method?.name === 'level-up') ??
-        entry.version_group_details?.[0]
-
-      if (!primaryDetail) {
-        return {
-          name: formatMoveLabel(entry.move.name),
-        }
-      }
-
-      return {
-        name: formatMoveLabel(entry.move.name),
-        level: primaryDetail.level_learned_at || undefined,
-        method: primaryDetail.move_learn_method?.name ?? undefined,
-        versionGroup: primaryDetail.version_group?.name ?? undefined,
-      }
-    })
-
-  return normalized
-    .sort((a, b) => (b.level ?? 0) - (a.level ?? 0))
-    .slice(0, 4)
-}
-
-function mapDisplayData(
-  bundle: PokemonBundle,
-  locale: Locale,
-  featuredAbilityOverride?: PokemonFeaturedAbility | null
-): PokemonDisplayData {
-  const { data, species, alternateForms } = bundle
-  return {
-    id: data.id,
-    formattedId: formatPokemonId(data.id),
-    name: extractLocalizedDisplayName(data, species, locale),
-    nativeName: extractNativeName(species, 'ja'),
-    description: extractDescription(species, locale),
-    genus: extractGenus(species, locale),
-    stats: mapStats(data),
-    types: data.types,
-    abilities: data.abilities,
-    featuredAbility: featuredAbilityOverride ?? selectFeaturedAbility(data),
-    signatureMoves: selectSignatureMoves(data),
-    height: data.height / 10,
-    weight: data.weight / 10,
-    sprite:
-      data.sprites?.other?.['official-artwork']?.front_default ??
-      data.sprites?.other?.home?.front_default ??
-      data.sprites?.front_default ??
-      '',
-    spriteShiny:
-      data.sprites?.other?.['official-artwork']?.front_shiny ??
-      data.sprites?.other?.home?.front_shiny ??
-      data.sprites?.front_shiny ??
-      null,
-    cryUrl: data.cries?.latest ?? data.cries?.legacy ?? undefined,
-    hasMegaEvolution: alternateForms.length > 0,
-    alternateForms,
-  }
-}
-
-function mapGridEntry(bundle: PokemonBundle, locale: Locale): PokemonGridEntry {
-  const { data, species, alternateForms } = bundle
-  return {
-    id: data.id,
-    formattedId: formatPokemonId(data.id),
-    name: extractLocalizedDisplayName(data, species, locale),
-    nativeName: extractNativeName(species, 'ja'),
-    sprite:
-      data.sprites?.other?.['official-artwork']?.front_default ??
-      data.sprites?.other?.home?.front_default ??
-      data.sprites?.front_default ??
-      '',
-    primaryType: data.types?.[0]?.type?.name ?? 'normal',
-    hasMegaEvolution: alternateForms.length > 0,
-    alternateForms: alternateForms.length ? alternateForms : undefined,
-    cryUrl: data.cries?.latest ?? data.cries?.legacy ?? undefined,
-  }
 }
 
 export async function getPokemonGridEntry(identifier: string | number, locale: Locale = 'en'): Promise<PokemonGridEntry> {
